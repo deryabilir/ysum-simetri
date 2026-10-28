@@ -18,7 +18,7 @@ st.title("🌀 YSÜM - Yerel Simetri Üstünlük Modeli")
 st.caption("Görsel Tabanlı Matematiksel Dönel Simetri Analiz Motoru")
 
 # ------------------------------------------------------------------------------
-# PENROSE VE YSÜM DERS/TEORİ BİLGİ KUTUSU (Ekran Görüntülerindeki Birebir Tasarım)
+# PENROSE VE YSÜM DERS/TEORİ BİLGİ KUTUSU (Ekran Görüntülerinizdeki Tasarım)
 # ------------------------------------------------------------------------------
 with st.expander("📌 Penrose Kaplamaları ve YSÜM Matematiği Hakkında Bilgi", expanded=True):
     col_a, col_b = st.columns(2)
@@ -68,7 +68,7 @@ negatif_kontrol = st.sidebar.checkbox("Negatif kontrol ile karşılaştır (rast
 uploaded_file = st.file_uploader("Analiz edilecek deseni (resmi) yükleyin (PNG, JPG)", type=["png", "jpg", "jpeg", "webp"])
 
 # YSÜM Çekirdek Hesaplama Fonksiyonu
-def hesapla_ysum_matrisi(resim_np, k, b_degeri, yaricaplar=, ornek_sayisi=36, adim=8):
+def hesapla_ysum_matrisi(resim_np, k, b_degeri, yaricaplar=[10, 20, 30, 40], ornek_sayisi=36, adim=8):
     yukseklik, genislik = resim_np.shape
     x_grid = np.arange(10, genislik - 10, adim)
     y_grid = np.arange(10, yukseklik - 10, adim)
@@ -125,13 +125,13 @@ if uploaded_file is not None:
         st.subheader("🖼️ Gerçek Görsel Analizi")
 
         if "5" in k_secim:
-            k_listesi = 
+            k_listesi = [5]
         elif "6" in k_secim:
-            k_listesi = 
+            k_listesi = [6]
         elif "8" in k_secim:
-            k_listesi = 
+            k_listesi = [8]
         else:
-            k_listesi = 
+            k_listesi = [5, 6, 8]
 
         cols = st.columns(len(k_listesi))
         skorlar = {}
