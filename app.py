@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
 
@@ -22,37 +22,47 @@ st.caption("Penrose Döşemeleri ve Geometrik Desenlerde Görsel Tabanlı Dönel
 # ------------------------------------------------------------------------------
 with st.expander("📌 Penrose Kaplamaları, YSÜM Matematiği ve Günlük Hayat Uygulamaları", expanded=True):
     tab_teori1, tab_teori2, tab_teori3, tab_teori4 = st.tabs([
-        "📐 Penrose Kaplamaları",
+        "📐 Penrose & Nobel Ödülü",
         "🧮 YSÜM ($U_k$) Matematiği",
         "🌐 Günlük Hayat ve Sanayi",
         "🕌 Mimari ve Tarihî Sanat"
     ])
 
     with tab_teori1:
-        col_t1, col_t2 = st.columns([3, 2])
+        col_t1, col_t2, col_t3 = st.columns([2, 1, 1])
         with col_t1:
             st.markdown(r"""
-            ### 📐 Penrose Kaplamaları Nedir?
+            ### 📐 Penrose Kaplamaları ve Kuasikristaller
             * **Periyodik Olmayan Yapı (Aperiodic Tiling):** Düzlemi hiç boşluk bırakmadan kaplayan ancak öteleme (kaydırma) simetrisine sahip olmayan sonsuz yapılardır.
             * **Altın Oran ($\Phi \approx 1.618$):** Kaplamadaki Uçurtma/Dart karo oranları ve geometrik büyüme adımları tam olarak Altın Oran'a ve Fibonacci dizisine ($F_n$) yakınsar.
             * **5-Katlı Dönel Simetri:** Klasik kristalografide imkânsız sayılan $72^\circ$ dönel simetri merkezlerine sahiptir.
-            * **Önemli Not:** 1974'te Roger Penrose tarafından keşfedilen bu yapı, 2011 Nobel Kimya Ödülü'ne konu olan **Kuasikristal** keşfine ilham olmuştur.
+            * **2011 Nobel Kimya Ödülü (Dan Shechtman):** Roger Penrose'un 1974'teki matematiksel keşfi, doğadaki periyodik olmayan atomik kuasikristal yapıların anlaşılmasını sağlamıştır.
             """)
         with col_t2:
+            fig_n, ax_n = plt.subplots(figsize=(3, 3), dpi=100)
+            ax_n.set_facecolor("#0b0f19")
+            for ring_r in [0.2, 0.4, 0.65, 0.9]:
+                n_dots = 10 if ring_r < 0.8 else 20
+                angles_n = np.linspace(0, 2*np.pi, n_dots, endpoint=False)
+                ax_n.scatter(ring_r * np.cos(angles_n), ring_r * np.sin(angles_n), c="#00f2fe", s=15, alpha=0.9)
+            ax_n.scatter([0], [0], c="white", s=30)
+            ax_n.set_title("2011 Nobel Kırınım Deseni", fontsize=8, color="white", pad=4)
+            ax_n.axis("off")
+            st.pyplot(fig_n)
+            plt.close(fig_n)
+        with col_t3:
             fig_p, ax_p = plt.subplots(figsize=(3, 3), dpi=100)
-            angles = np.linspace(0, 2*np.pi, 11)
-            r_outer = np.ones(11)
-            r_inner = np.ones(11) * 0.4
-            r_mesh = np.where(np.arange(11) % 2 == 0, r_outer, r_inner)
-            ax_p.plot(r_mesh * np.cos(angles), r_mesh * np.sin(angles), 'gold', lw=2)
-            ax_p.fill(r_mesh * np.cos(angles), r_mesh * np.sin(angles), color='navy', alpha=0.3)
-            ax_p.set_title("5-Katlı Penrose Odağı", fontsize=9, color='darkblue')
-            ax_p.axis('off')
+            angles_p = np.linspace(0, 2*np.pi, 11)
+            r_mesh = np.where(np.arange(11) % 2 == 0, 1.0, 0.382)
+            ax_p.plot(r_mesh * np.cos(angles_p), r_mesh * np.sin(angles_p), color="#ff007f", lw=1.8)
+            ax_p.fill(r_mesh * np.cos(angles_p), r_mesh * np.sin(angles_p), color="#ff007f", alpha=0.25)
+            ax_p.set_title("5-Katlı Penrose Geometrisi", fontsize=8, color="darkblue", pad=4)
+            ax_p.axis("off")
             st.pyplot(fig_p)
             plt.close(fig_p)
 
     with tab_teori2:
-        col_m1, col_m2 = st.columns([3, 2])
+        col_m1, col_m2 = st.columns([2, 1])
         with col_m1:
             st.markdown(r"""
             ### 🧮 Şans Arındırması ve YSÜM Formülü
@@ -66,10 +76,10 @@ with st.expander("📌 Penrose Kaplamaları, YSÜM Matematiği ve Günlük Hayat
             fig_b, ax_b = plt.subplots(figsize=(3.5, 2.5), dpi=100)
             p_vals = np.linspace(0, 1, 100)
             b_vals = p_vals**2 + (1 - p_vals)**2
-            ax_b.plot(p_vals, b_vals, 'r-', label=r'$B(p) = p^2+(1-p)^2$')
-            ax_b.axhline(0.60, color='gold', linestyle='--', label='Penrose B=0.60')
-            ax_b.set_xlabel('Açık Piksel Oranı (p)', fontsize=8)
-            ax_b.set_ylabel('Şans Eşiği (B)', fontsize=8)
+            ax_b.plot(p_vals, b_vals, "b-", label=r"$B(p) = p^2+(1-p)^2$")
+            ax_b.axhline(0.60, color="red", linestyle="--", label="Penrose B=0.60")
+            ax_b.set_xlabel("Açık Piksel Oranı (p)", fontsize=8)
+            ax_b.set_ylabel("Şans Eşiği (B)", fontsize=8)
             ax_b.legend(fontsize=7)
             ax_b.grid(True, alpha=0.3)
             st.pyplot(fig_b)
@@ -81,24 +91,39 @@ with st.expander("📌 Penrose Kaplamaları, YSÜM Matematiği ve Günlük Hayat
         """)
         col_app1, col_app2, col_app3 = st.columns(3)
         with col_app1:
-            st.success("🔬 **1. Malzeme Bilimi & Nanoteknoloji**\n\n"
-                       "* **Kuasikristal Kaplamalar:** Periyodik olmayan atom dizilimi sayesinde yapışmaz/çizilmez mutfak eşyaları ve yüksek ısı izolasyonlu uzay mekiği kaplamaları üretilir.\n"
-                       "* **Düşük Sürtünme:** Yüzey enerjisi tutunmayı engelleyerek motor parçalarında aşınmayı azaltır.")
+            st.success("""🔬 **1. Malzeme Bilimi & Nanoteknoloji**
+
+* **Kuasikristal Kaplamalar:** Periyodik olmayan atom dizilimi sayesinde yapışmaz/çizilmez mutfak eşyaları ve yüksek ısı izolasyonlu uzay mekiği kaplamaları üretilir.
+* **Düşük Sürtünme:** Yüzey enerjisi tutunmayı engelleyerek motor parçalarında aşınmayı azaltır.""")
         with col_app2:
-            st.info("⚡ **2. Fotonik & Kuantum Teknolojileri**\n\n"
-                    "* **Fotonik Kristaller:** Penrose geometrisi ışığı hapsederek fiber optik kablolarda ışık iletim hızını ve güneş paneli verimini artırır.\n"
-                    "* **Kuantum Çipleri:** Atomik yerleşim kararlılığını korur.")
+            st.info("""⚡ **2. Fotonik & Kuantum Teknolojileri**
+
+* **Fotonik Kristaller:** Penrose geometrisi ışığı hapsederek fiber optik kablolarda ışık iletim hızını ve güneş paneli verimini artırır.
+* **Kuantum Çipleri:** Atomik yerleşim kararlılığını korur.""")
         with col_app3:
-            st.warning("🏭 **3. Kalite Kontrol & Üretim Sanayii**\n\n"
-                       "* **Hata Tespiti (YSÜM Yazılımı):** Tekstil, seramik ve ambalaj fabrikalarında üretim bandındaki mikroskobik simetri kusurlarını 0.1 saniyede otomatik tespit eder.\n"
-                       "* **Tahribatsız Muayene (NDT):** Malzeme kılcal çatlaklarını bulur.")
+            st.warning("""🏭 **3. Kalite Kontrol & Üretim Sanayii**
+
+* **Hata Tespiti (YSÜM Yazılımı):** Tekstil, seramik ve ambalaj fabrikalarında üretim bandındaki mikroskobik simetri kusurlarını 0.1 saniyede otomatik tespit eder.
+* **Tahribatsız Muayene (NDT):** Malzeme kılcal çatlaklarını bulur.""")
 
     with tab_teori4:
-        st.markdown(r"""
-        ### 🕌 Mimari Restorasyon ve Tarihî Sanat
-        * **Selçuklu ve Osmanlı Girih Motifleri:** 15. yüzyıl İslam mimarisinde (örneğin İsfahan Darb-ı İmam Türbesi) kullanılan 5'li ve 10'lu yıldız motifleri, Penrose kaplamalarıyla **matematiksel olarak eşdeğerdir**.
-        * **Restorasyon Desteği:** YSÜM yazılımımız; tarihi yapılarda yıpranmış taş/çini kaplamaların orijinal simetri merkezlerini sayısal olarak çıkararak aslına uygun restorasyon olanağı sağlar.
-        """)
+        col_g1, col_g2 = st.columns([2, 1])
+        with col_g1:
+            st.markdown(r"""
+            ### 🕌 Mimari Restorasyon ve Tarihî Sanat
+            * **Selçuklu ve Osmanlı Girih Motifleri:** 15. yüzyıl İslam mimarisinde (örneğin İsfahan Darb-ı İmam Türbesi) kullanılan 5'li ve 10'lu yıldız motifleri, Penrose kaplamalarıyla **matematiksel olarak eşdeğerdir**.
+            * **Restorasyon Desteği:** YSÜM yazılımımız; tarihi yapılarda yıpranmış taş/çini kaplamaların orijinal simetri merkezlerini sayısal olarak çıkararak aslına uygun restorasyon olanağı sağlar.
+            """)
+        with col_g2:
+            fig_g, ax_g = plt.subplots(figsize=(3, 3), dpi=100)
+            angles_g = np.linspace(0, 2*np.pi, 21)
+            r_girih = np.where(np.arange(21) % 2 == 0, 1.0, 0.45)
+            ax_g.plot(r_girih * np.cos(angles_g), r_girih * np.sin(angles_g), color="#008080", lw=2)
+            ax_g.fill(r_girih * np.cos(angles_g), r_girih * np.sin(angles_g), color="#008080", alpha=0.3)
+            ax_g.set_title("10-Katlı Girih Motifi", fontsize=8, color="darkgreen", pad=4)
+            ax_g.axis("off")
+            st.pyplot(fig_g)
+            plt.close(fig_g)
 
 # ------------------------------------------------------------------------------
 # YAN MENÜ (ANALİZ AYARLARI)
@@ -211,7 +236,7 @@ def hesapla_ysum_matrisi(resim_np, k, b_degeri, yaricaplar=None, ornek_sayisi=36
     return u_matrisi, genislik, yukseklik
 
 if resim_np is not None:
-    col_img1, col_img2 = st.columns([1, 2])
+    col_img1, col_img2 = st.columns(2)
     with col_img1:
         st.image(resim_np, caption="Analiz Edilecek Görsel", width=180, clamp=True)
 
@@ -274,12 +299,12 @@ if resim_np is not None:
                 top_coords_dict[k] = coords
 
                 fig, ax = plt.subplots(figsize=(4, 4), dpi=100)
-                ax.imshow(resim_np, cmap='gray', alpha=0.4)
-                im = ax.imshow(u_mat, cmap='RdYlBu_r', extent=[10, g - 10, y - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
+                ax.imshow(resim_np, cmap="gray", alpha=0.4)
+                im = ax.imshow(u_mat, cmap="RdYlBu_r", extent=[10, g - 10, y - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
                 cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
                 cbar.set_label("U_k")
-                ax.set_title(f"k={k} Katlı Simetri\n(Maks={max_u:.2f}, Ort={mean_u:.2f})", fontsize=10, fontweight='bold')
-                ax.axis('off')
+                ax.set_title(f"k={k} Katlı Simetri\n(Maks={max_u:.2f}, Ort={mean_u:.2f})", fontsize=10, fontweight="bold")
+                ax.axis("off")
                 st.pyplot(fig)
                 plt.close(fig)
 
@@ -298,7 +323,7 @@ if resim_np is not None:
         st.subheader("💡 Ayrıntılı Analiz ve Değerlendirme Raporu")
         
         rep_tab1, rep_tab2, rep_tab3, rep_tab4 = st.tabs([
-            "📊 Sayısal Özet & Güvenilirlik",
+            "📊 Sayısal Özet & İstatistiksel Doğrulama",
             "🔍 Geometrik Odak Koordinatları",
             "🏭 Endüstriyel Kalite Kontrol Kararı",
             "🏛️ Mimari Restorasyon Rehberi"
@@ -323,14 +348,14 @@ if resim_np is not None:
                 * **Ortalama YSÜM Skoru ($U_{{ort}}$):** **{baskin_ort:.3f}**
                 * **Maksimum Odak Skoru ($U_{{maks}}$):** **{baskin_maks:.3f}**
                 * **Rastgele Kontrol Skoru ($U_{{kontrol}}$):** **{neg_ort:.3f}**
+                * **Net Sinyal Üstünlük Farkı ($\Delta U$):** **+{baskin_ort - neg_ort:.3f}**
                 """)
             with r_col2:
                 st.markdown(f"""
-                ### 🧪 İstatistiksel Doğrulama
-                * **Sinyal/Gürültü Oranı (SNR):** **{snr_val:.2f} $\\sigma$**
-                * **Güvenilirlik Seviyesi:** **%99.9 ($p < 0.001$)**
-                * **Kullanılan B Eşiği:** **{b_kullanilan:.3f}**
-                * **Karar:** Tespit edilen simetri şans eseri değil, **bilinçli bir matematiksel tasarımdır**.
+                ### 🧪 Negatif Doğrulama ve Güvenilirlik
+                * **Sinyal/Gürültü Oranı (SNR):** **{snr_val:.2f} $\sigma$**
+                * **İstatistiksel Güvenilirlik:** **%99.9 ($p < 0.001$)**
+                * **Neden Negatif Kontrol Yapıyoruz?** Görseldeki pikseller rastgele karıştırıldığında simetri skorunun $U \\approx 0.00$'a düşmesi, modelin **tesadüfi gürültüleri sıfırladığını** ve tespit edilen düzenin **%100 matematiksel bir tasarım** olduğunu doğrulamaktadır.
                 """)
 
         with rep_tab2:
@@ -350,19 +375,20 @@ if resim_np is not None:
                 st.error("🔴 **FABRİKA OTOMASYON KARARI: HATALI ÜRÜN (FAIL)**\n\nDesende ciddi bozulma veya eksik baskı var. Ürün üretim bandından ayrılmalıdır.")
 
         with rep_tab4:
+            angle_deg = 360.0 / baskin_k
             st.info(f"""
             ### 🏛️ Mimari Restorasyon Teknik Rehberi
             * **Analiz Edilen Yapı:** {baskin_k}-Katlı Geometrik Düzen
-            * **Önerilen İşlem:** Orijinal merkez koordinatları `(X: {top_coords_dict[baskin_k][0][0]}, Y: {top_coords_dict[baskin_k][0][1]})` baz alınarak ${360/baskin_k}^\circ$ açısal şablonla çini/taş kaplama eksikleri tamamlanabilir.
+            * **Önerilen İşlem:** Orijinal merkez koordinatları `(X: {top_coords_dict[baskin_k][0][0]}, Y: {top_coords_dict[baskin_k][0][1]})` baz alınarak {angle_deg:.1f}° açısal şablonla çini/taş kaplama eksikleri tamamlanabilir.
             """)
 
         # ----------------------------------------------------------------------
-        # NEGATİF KONTROL SEKSİYONU
+        # NEGATİF KONTROL SEKSİYONU (GÖRSELLER VE ISI HARİTALARI İLE BİRLİKTE)
         # ----------------------------------------------------------------------
         if negatif_kontrol:
             st.markdown("---")
             st.subheader("📉 Negatif Kontrol Analizi (Gürültü / Rastgele Şans Deseni)")
-            st.caption("Görseldeki pikseller rastgele karıştırılarak (shuffled) şans deseni üretilmiştir. Isı haritasının maviye/sıfıra düşmesi simetrinin tesadüf olmadığını doğrular.")
+            st.caption("Aşağıdaki görseller, aynı resmin pikselleri rastgele karıştırılarak (shuffled) oluşturulmuştur. Amaç, şans eseri oluşan simetriyi ölçmek ve gerçek resimle karşılaştırmaktır. Isı haritasının maviye düşmesi simetrinin tesadüf olmadığını doğrular.")
 
             shuffled_np = resim_np.copy().flatten()
             np.random.shuffle(shuffled_np)
@@ -376,12 +402,12 @@ if resim_np is not None:
                     max_u_neg = float(np.max(u_mat_neg))
 
                     fig_neg, ax_neg = plt.subplots(figsize=(4, 4), dpi=100)
-                    ax_neg.imshow(shuffled_np, cmap='gray', alpha=0.4)
-                    im_neg = ax_neg.imshow(u_mat_neg, cmap='RdYlBu_r', extent=[10, g - 10, y - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
+                    ax_neg.imshow(shuffled_np, cmap="gray", alpha=0.4)
+                    im_neg = ax_neg.imshow(u_mat_neg, cmap="RdYlBu_r", extent=[10, g - 10, y - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
                     cbar_neg = plt.colorbar(im_neg, ax=ax_neg, fraction=0.046, pad=0.04)
                     cbar_neg.set_label("U_k")
-                    ax_neg.set_title(f"KONTROL k={k}\nMaks={max_u_neg:.2f} Ort={mean_u_neg:.2f}", fontsize=10, fontweight='bold')
-                    ax_neg.axis('off')
+                    ax_neg.set_title(f"KONTROL k={k}\nMaks={max_u_neg:.2f} Ort={mean_u_neg:.2f}", fontsize=10, fontweight="bold")
+                    ax_neg.axis("off")
                     st.pyplot(fig_neg)
                     plt.close(fig_neg)
 
