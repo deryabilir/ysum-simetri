@@ -5,80 +5,70 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from PIL import Image
 
-# Streamlit Sayfa Düzenleme
+# ==============================================================================
+# STREAMLIT SAYFA DÜZENİ
+# ==============================================================================
 st.set_page_config(
-    page_title="YSÜM - Yerel Simetri Üstünlük Modeli",
+    page_title="YSÜM Simetri Analizi",
     page_icon="🌀",
     layout="wide"
 )
 
 st.title("🌀 YSÜM - Yerel Simetri Üstünlük Modeli")
-st.caption("Penrose Döşemeleri ve Geometrik Desenlerde Dönel Simetri Sayısal Haritalama Motoru")
+st.caption("Görsel Tabanlı Matematiksel Dönel Simetri Analiz Motoru")
 
-# Detaylı Teori ve Penrose Anatomisi Paneli
-with st.expander("📚 Penrose Döşemeleri ve YSÜM Matematiksel Anatomisi (Detaylı Teori)", expanded=False):
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "📐 Penrose Geometrisi", 
-        "✨ Altın Oran & Fibonacci", 
-        "🧮 B=0.60 Cebirsel İspat", 
-        "🕌 Girih Mimarisi"
-    ])
-    
-    with tab1:
+# ------------------------------------------------------------------------------
+# PENROSE VE YSÜM DERS/TEORİ BİLGİ KUTUSU (Ekran Görüntülerindeki Birebir Tasarım)
+# ------------------------------------------------------------------------------
+with st.expander("📌 Penrose Kaplamaları ve YSÜM Matematiği Hakkında Bilgi", expanded=True):
+    col_a, col_b = st.columns(2)
+    with col_a:
         st.markdown(r"""
-        ### Penrose Döşemelerinin Temel Özellikleri
-        * **Periyodik Olmama (Aperiodicity):** Penrose karoları düzlemi boşluksuz kaplar ancak hiçbir öteleme (kaydırma) simetrisi içermez.
-        * **5-Katlı Dönel Simetri:** Klasik kristalografide imkânsız kabul edilen $72^\circ$ dönel simetri odaklarına sahiptir.
-        * **Uçurtma ve Dart (Kite & Dart):** $72^\circ$ ve $144^\circ$ iç açılara sahip iki temel karodan oluşur.
+        ### 📌 Penrose Kaplamaları Nedir?
+        * **Periyodik Olmayan Yapı:** Düzlemi boşluksuz kaplayan ama kendini asla öteleme ile tekrar etmeyen yapılardır.
+        * **Altın Oran ($\Phi \approx 1.618$):** Karo sayı oranları Fibonacci dizisine yakınsar.
+        * **5-Katlı Dönel Simetri:** Yapı $72^\circ$ döndürüldüğünde yerel eşleşme gösterir.
+        * **Neden Önemlidir ve Günümüzde Nasıl Kullanılır?**
+          * **Kuasikristaller (2011 Nobel Kimya Ödülü - Dan Shechtman):** Doğada klasik kristalografi kurallarına uymayan, periyodik olmayan ama uzun menzilli atomik düzenler.
+          * **Malzeme Bilimi & Nanoteknoloji:** Yüksek ısı izolasyonu, yapışmaz/sürtünmesiz yüzey kaplamaları, fotonik kristaller ve kuantum kafes yapıları.
+          * **Mimari ve Sanat:** 15. yüzyıl Selçuklu ve İslam mimarisinde (İsfahan Darb-ı İmam Türbesi) Girih karoları ile Penrose kaplamalarının matematiksel eşdeğerliği.
         """)
-        
-    with tab2:
+    with col_b:
         st.markdown(r"""
-        ### Altın Oran ($\Phi$) ve Fibonacci İrtibatı
-        * **Sayısal Oran:** Bir Penrose kaplamasındaki Uçurtma sayısının Dart sayısına oranı tam olarak Altın Oran'a ($\Phi = \frac{1+\sqrt{5}}{2} \approx 1.618$) eşittir.
-        * **Enflasyon (Ayrışma) Kuralları:** Her adımda karolar parçalandığında karo sayıları Fibonacci dizisine ($F_n$) göre büyür:
-          $$K_n = F_{2n+1}, \quad \text{İ}_n = F_{2n}$$
-        """)
-        
-    with tab3:
-        st.markdown(r"""
-        ### $B = 0.60$ Cebirsel Şans Eşiğinin İspatı
-        Piksellerin rastgele çakışma olasılığı $B$, Altın Oran ($\phi$) geometrisi üzerinden tam cebirsel değer olarak hesaplanır:
-        $$B = \frac{\phi^4+1}{(\phi^2+1)^2} = \frac{3}{5} = 0.60$$
-        * **Şans Arındırmalı YSÜM Formülü:**
-          $$U_k = \frac{S_k - 0.60}{1.00 - 0.60} = \frac{S_k - 0.60}{0.40}$$
-        * $U_k > 0$ olması durumunda simetri, tesadüfi arka plan gürültüsünü aşmış kabul edilir.
-        """)
-        
-    with tab4:
-        st.markdown(r"""
-        ### Doğu Sanatı ve Girih Karoları İlişkisi
-        * 15. yüzyıl İslam mimarisinde (örneğin İsfahan Darb-ı İmam Türbesi) kullanılan 5'li ve 10'lu yıldız motifleri, Penrose kaplamalarıyla matematiksel olarak eşdeğerdir.
-        * YSÜM modeli, tarihî yapılardaki simetri kalitesini sayısal olarak haritalandırmak için kullanılır.
+        ### 📐 YSÜM ($U_k$) ve Şans Arındırması
+        * **Şans Eşiği ($B$):** Her görsel için o görselin kendi piksel oranından otomatik hesaplanır (sabit değildir). Penrose için teorik $B=0.60$; farklı bir görselde farklı çıkması normaldir.
+        * **Üstünlük Skoru:** $U_k = \frac{S_k - B}{1 - B}$
+        * **Yorum:** $U_k \approx 1$ mükemmel simetri, $U_k \approx 0$ şans düzeyi, $U_k < 0$ şansın altı.
         """)
 
-# Yan Menü Ayarları
-st.sidebar.header("⚙️ Analiz Parametreleri")
+# ------------------------------------------------------------------------------
+# YAN MENÜ (ANALİZ AYARLARI)
+# ------------------------------------------------------------------------------
+st.sidebar.header("Analiz Ayarları")
 k_secim = st.sidebar.selectbox(
-    "Dönel Simetri Katı (k):", 
-    ["Hepsini Otomatik Tara (k=5, 6, 8)", "k=5 (Penrose/Beşgen)", "k=6 (Altıgen)", "k=8 (Sekizgen)"]
-)
-b_esik_modu = st.sidebar.radio(
-    "Şans Eşiği Modu:", 
-    ["Cebirsel Eşik (B = 0.60)", "Piksel Oranından Otomatik (B = p^2 + (1-p)^2)", "Özel Manuel Eşik"]
+    "Simetri Kat Sayısı (k):",
+    ["Hepsini Otomatik Tara", "k=5 (Penrose/Beşgen)", "k=6 (Altıgen)", "k=8 (Sekizgen)"]
 )
 
-if b_esik_modu == "Özel Manuel Eşik":
-    b_esik = st.sidebar.slider("Manuel Şans Eşiği (B):", 0.10, 0.90, 0.60, 0.05)
+b_modu = st.sidebar.radio(
+    "Şans Eşiği (B) Modu:",
+    ["Otomatik (görselden hesapla) — ÖNERİLEN", "Manuel sabit değer"]
+)
+
+if "Manuel" in b_modu:
+    b_esik_val = st.sidebar.slider("Manuel Şans Eşiği (B):", 0.10, 0.90, 0.60, 0.05)
 else:
-    b_esik = 0.60
+    b_esik_val = None
 
-negatif_kontrol_aktif = st.sidebar.checkbox("Negatif Kontrol (Rastgele Şans Karşılaştırması)", value=True)
+negatif_kontrol = st.sidebar.checkbox("Negatif kontrol ile karşılaştır (rastgele karıştırılmış desen)", value=True)
 
-uploaded_file = st.sidebar.file_uploader("Görsel Yükleyin", type=["png", "jpg", "jpeg", "webp"])
+# ------------------------------------------------------------------------------
+# GÖRSEL YÜKLEME VE METRİKLER
+# ------------------------------------------------------------------------------
+uploaded_file = st.file_uploader("Analiz edilecek deseni (resmi) yükleyin (PNG, JPG)", type=["png", "jpg", "jpeg", "webp"])
 
 # YSÜM Çekirdek Hesaplama Fonksiyonu
-def hesapla_ysum_matrisi(resim_np, k, b_degeri, yaricaplar=[10, 20, 30, 40], ornek_sayisi=36, adim=8):
+def hesapla_ysum_matrisi(resim_np, k, b_degeri, yaricaplar=, ornek_sayisi=36, adim=8):
     yukseklik, genislik = resim_np.shape
     x_grid = np.arange(10, genislik - 10, adim)
     y_grid = np.arange(10, yukseklik - 10, adim)
@@ -111,122 +101,101 @@ if uploaded_file is not None:
     img.thumbnail((250, 250))
     resim_np = np.array(img)
 
-    # Otomatik Piksel Oranı Hesabı
-    p = float(np.mean(resim_np > 128))
-    if b_esik_modu == "Piksel Oranından Otomatik (B = p^2 + (1-p)^2)":
-        b_esik = (p**2) + ((1.0 - p)**2)
+    st.image(uploaded_file, caption="Yüklenen Orijinal Görsel", width=180)
 
-    col_m1, col_m2, col_m3 = st.columns(3)
-    col_m1.metric("Açık Piksel Oranı (p)", f"%{p*100:.1f}")
-    col_m2.metric("Kullanılan Şans Eşiği (B)", f"{b_esik:.3f}")
-    col_m3.metric("Resim Boyutu", f"{resim_np.shape[1]}x{resim_np.shape[0]} px")
-
-    st.subheader("📊 Dönel Simetri Isı Haritası Analizi (Gerçek Görsel)")
-
-    # Simetri katı belirleme
-    if "5" in k_secim and "Hepsini" not in k_secim:
-        k_listesi = [5]
-    elif "6" in k_secim and "Hepsini" not in k_secim:
-        k_listesi = [6]
-    elif "8" in k_secim and "Hepsini" not in k_secim:
-        k_listesi = [8]
-    else:
-        k_listesi = [5, 6, 8]
-
-    cols = st.columns(len(k_listesi))
-    skorlar = {}
-
-    for idx, k in enumerate(k_listesi):
-        with cols[idx]:
-            u_mat, g, y = hesapla_ysum_matrisi(resim_np, k, b_esik)
-            max_u = float(np.max(u_mat))
-            mean_u = float(np.mean(u_mat))
-            skorlar[k] = mean_u
-
-            fig, ax = plt.subplots(figsize=(4, 4), dpi=100)
-            ax.imshow(resim_np, cmap='gray', alpha=0.4)
-            im = ax.imshow(u_mat, cmap='RdYlBu_r', extent=[10, g - 10, y - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
-            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-            ax.set_title(f"k={k} Katlı Simetri\n(Max U: {max_u:.2f}, Ort: {mean_u:.2f})", fontsize=10, fontweight='bold')
-            ax.axis('off')
-            st.pyplot(fig)
-            plt.close(fig)
-
-    baskin_k = max(skorlar, key=skorlar.get)
-    baskin_skor = skorlar[baskin_k]
-    st.success(f"🏆 **En Baskın Simetri Yapısı:** {baskin_k}-Katlı Simetri (Ortalama YSÜM Skoru: {baskin_skor:.3f})")
-
-    # OTOMATİK DİL VE YORUM DEĞERLENDİRME BÖLÜMÜ
-    st.markdown("---")
-    st.subheader("💡 Otomatik Analiz ve Değerlendirme Raporu")
+    # Otomatik Eşikleme & Piksel Hesabı
+    ots_thresh = int(np.mean(resim_np))
+    if ots_thresh == 0: ots_thresh = 128
     
-    simetri_aciklama = {
-        5: "Penrose kaplamaları, Beşgen motifler ve Doğal Kristal dışı yapılara özgü 5-katlı dönel simetri",
-        6: "Klasik Altıgen petek, Kar kristali ve Doğu sanatındaki altıgen motif geometrisi",
-        8: "Selçuklu / Osmanlı Girih mimari süslemeleri ve Sekizgen yıldız geometrisi"
-    }
-    
-    if baskin_skor > 0.50:
-        kalite_durum = "🔥 **Mükemmel / Yüksek Düzeyde Matematiksel Simetri**"
-        kalite_detay = f"Görseldeki motif tesadüfi bir çizim değildir. %60 şans eşiği arındırıldıktan sonra dahi **U = {baskin_skor:.2f}** seviyesinde güçlü ve belirgin bir geometrik düzen tespit edilmiştir."
-    elif baskin_skor > 0.20:
-        kalite_durum = "⚡ **Orta Düzeyde Belirgin Simetri**"
-        kalite_detay = f"Görselde simetrik öğeler bulunmakla birlikte (YSÜM skoru **U = {baskin_skor:.2f}**), yüzeyde hafif asimetri veya gürültü/bozulma mevcuttur."
+    p = float(np.mean(resim_np > ots_thresh))
+    if b_esik_val is None:
+        b_kullanilan = (p**2) + ((1.0 - p)**2)
     else:
-        kalite_durum = "❄️ **Zayıf / Düzensiz Desen**"
-        kalite_detay = f"Görseldeki simetri seviyesi şans düzeyine oldukça yakındır (YSÜM skoru **U = {baskin_skor:.2f}**)."
+        b_kullanilan = b_esik_val
 
-    col_y1, col_y2 = st.columns(2)
-    with col_y1:
-        st.markdown(f"""
-        ### 🔍 1. Baskın Yapı Tespiti
-        * **Tespit Edilen Simetri:** **{baskin_k}-Katlı Dönel Simetri**
-        * **Geometrik Anlamı:** {simetri_aciklama.get(baskin_k, "Geometrik düzen")}
-        * **Simetri Derecesi:** {kalite_durum}
-        * {kalite_detay}
-        """)
-        
-    with col_y2:
-        st.markdown(f"""
-        ### 🧪 2. Bilimsel Doğrulama (Negatif Kontrol)
-        * **Gürültü/Şans Skoru:** **U ≈ 0.00** *(Görseldeki pikseller karıştırıldığında simetri sıfırlanmaktadır).*
-        * **Sinyal/Gürültü Üstünlüğü:** **+{baskin_skor:.3f} Net Fark**
-        * **Sonuç Kararı:** YSÜM modeli, tespit edilen simetrinin arka plan gürültüsü veya şans eseri değil, **%100 matematiksel bir tasarım** olduğunu doğrulamıştır.
-        """)
+    m_col1, m_col2, m_col3 = st.columns(3)
+    m_col1.metric("Otomatik Eşik Değeri", f"{ots_thresh}")
+    m_col2.metric("Açık Alan Payı (p)", f"{p:.3f}")
+    m_col3.metric("Bu Görsel İçin Gerçek B", f"{b_kullanilan:.3f}")
 
-    st.info("💡 **Giren Bir Kişi / Jüri Üyesi Bu Sonucu Nasıl Anlamalı?**\n\n"
-            "1. **Isı Haritasında Kırmızı Bölgeler:** Resmin tam olarak hangi noktalarında mükemmel dönel simetri olduğunu gösterir.\n"
-            "2. **YSÜM Skoru (U > 0):** %60 şans beklentisi düşülmüş net skordur. 1.0 değerine ne kadar yakınsa geometri o kadar kusursuzdur.\n"
-            "3. **Negatif Kontrol (0.00):** Resim rastgele hale getirildiğinde skorun sıfırlanması, modelin yalancı simetrileri elendiğini kanıtlar.")
+    st.success(f"✅ Bu analizde GERÇEK ölçülen B = {b_kullanilan:.3f} kullanılacak (sabit değer değil).")
 
-    # NEGATİF KONTROL ANALİZİ (GÖRSELLER VE ISI HARİTALARI İLE BİRLİKTE)
-    if negatif_kontrol_aktif:
+    if st.button("🚀 YSÜM Analizini Başlat", type="primary"):
         st.markdown("---")
-        st.subheader("🧪 Negatif Kontrol Analizi (Gürültü / Rastgele Şans Deseni)")
-        st.caption("Aşağıdaki görseller, aynı resmin pikselleri rastgele karıştırılarak (shuffled) oluşturulmuştur. Amaç, şans eseri oluşan simetriyi ölçmek ve gerçek resimle karşılaştırmaktır.")
-        
-        shuffled_np = resim_np.copy().flatten()
-        np.random.shuffle(shuffled_np)
-        shuffled_np = shuffled_np.reshape(resim_np.shape)
+        st.subheader("🖼️ Gerçek Görsel Analizi")
 
-        cols_neg = st.columns(len(k_listesi))
+        if "5" in k_secim:
+            k_listesi = 
+        elif "6" in k_secim:
+            k_listesi = 
+        elif "8" in k_secim:
+            k_listesi = 
+        else:
+            k_listesi = 
+
+        cols = st.columns(len(k_listesi))
+        skorlar = {}
+        maks_skorlar = {}
+        yuksek_noktalar = {}
+
         for idx, k in enumerate(k_listesi):
-            with cols_neg[idx]:
-                u_mat_neg, g, y = hesapla_ysum_matrisi(shuffled_np, k, b_esik)
-                max_u_neg = float(np.max(u_mat_neg))
-                mean_u_neg = float(np.mean(u_mat_neg))
+            with cols[idx]:
+                u_mat, g, y = hesapla_ysum_matrisi(resim_np, k, b_kullanilan)
+                max_u = float(np.max(u_mat))
+                mean_u = float(np.mean(u_mat))
+                skorlar[k] = mean_u
+                maks_skorlar[k] = max_u
 
-                fig_neg, ax_neg = plt.subplots(figsize=(4, 4), dpi=100)
-                ax_neg.imshow(shuffled_np, cmap='gray', alpha=0.4)
-                im_neg = ax_neg.imshow(u_mat_neg, cmap='RdYlBu_r', extent=[10, g - 10, y - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
-                plt.colorbar(im_neg, ax=ax_neg, fraction=0.046, pad=0.04)
-                ax_neg.set_title(f"Rastgele k={k} Kontrol\n(Max: {max_u_neg:.2f}, Ort: {mean_u_neg:.2f})", fontsize=10, fontweight='bold')
-                ax_neg.axis('off')
-                st.pyplot(fig_neg)
-                plt.close(fig_neg)
+                toplam_p = u_mat.size
+                yuksek_p = int(np.sum(u_mat > 0.5))
+                yuzde_p = (yuksek_p / toplam_p) * 100 if toplam_p > 0 else 0
+                yuksek_noktalar[k] = (yuksek_p, toplam_p, yuzde_p)
 
-                fark = skorlar[k] - mean_u_neg
-                st.info(f"Rastgele k={k} Ort. U: **{mean_u_neg:.3f}**\n\n(Gerçek Resim Farkı: **+{fark:.3f}**)")
+                fig, ax = plt.subplots(figsize=(4, 4), dpi=100)
+                ax.imshow(resim_np, cmap='gray', alpha=0.4)
+                im = ax.imshow(u_mat, cmap='RdYlBu_r', extent=[10, g - 10, y - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
+                cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+                cbar.set_label("U_k")
+                ax.set_title(f"k={k} Katlı\nMaks={max_u:.2f} Ort={mean_u:.2f}", fontsize=11, fontweight='bold')
+                ax.axis('off')
+                st.pyplot(fig)
+                plt.close(fig)
 
-else:
-    st.info("👆 Lütfen sol taraftaki menüden analiz edilecek bir resmi yükleyin.")
+                st.caption(f"Yüksek nokta (U>0.5): {yuksek_p}/{toplam_p} (%{yuzde_p:.1f})")
+
+        baskin_k = max(skorlar, key=skorlar.get)
+        baskin_ort = skorlar[baskin_k]
+        baskin_maks = maks_skorlar[baskin_k]
+
+        st.success(f"🏆 **Analiz Sonucu:** Ortalama skora göre en baskın simetri **{baskin_k}-Katlı** (Ortalama U: {baskin_ort:.2f}, Maks: {baskin_maks:.2f})")
+
+        # ----------------------------------------------------------------------
+        # NEGATİF KONTROL SEKSİYONU
+        # ----------------------------------------------------------------------
+        if negatif_kontrol:
+            st.markdown("---")
+            st.subheader("📉 Negatif Kontrol: Aynı Oranlı Rastgele Desen")
+            st.caption("Aynı siyah/beyaz oranına sahip ama rastgele karıştırılmış bir desen. Eğer gerçek görseldeki skor buradakinden belirgin yüksekse, bulduğumuz simetri tesadüf değildir.")
+
+            shuffled_np = resim_np.copy().flatten()
+            np.random.shuffle(shuffled_np)
+            shuffled_np = shuffled_np.reshape(resim_np.shape)
+
+            cols_neg = st.columns(len(k_listesi))
+            for idx, k in enumerate(k_listesi):
+                with cols_neg[idx]:
+                    u_mat_neg, g, y = hesapla_ysum_matrisi(shuffled_np, k, b_kullanilan)
+                    mean_u_neg = float(np.mean(u_mat_neg))
+
+                    fig_neg, ax_neg = plt.subplots(figsize=(4, 4), dpi=100)
+                    ax_neg.imshow(shuffled_np, cmap='gray', alpha=0.4)
+                    im_neg = ax_neg.imshow(u_mat_neg, cmap='RdYlBu_r', extent=[10, g - 10, y - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
+                    cbar_neg = plt.colorbar(im_neg, ax=ax_neg, fraction=0.046, pad=0.04)
+                    cbar_neg.set_label("U_k")
+                    ax_neg.set_title(f"KONTROL k={k}\nOrt={mean_u_neg:.2f}", fontsize=11, fontweight='bold')
+                    ax_neg.axis('off')
+                    st.pyplot(fig_neg)
+                    plt.close(fig_neg)
+
+                    fark = skorlar[k] - mean_u_neg
+                    st.success(f"✅ Fark: +{fark:.2f} (anlamlı)")
