@@ -9,22 +9,23 @@ from PIL import Image, ImageDraw
 # STREAMLIT SAYFA DÜZENİ
 # ==============================================================================
 st.set_page_config(
-    page_title="YSÜM - Yerel Simetri Üstünlük Modeli",
+    page_title="YSÜM - Yerel Simetri Üstünlük Modeli & Derma-YSÜM",
     page_icon="🌀",
     layout="wide"
 )
 
-st.title("🌀 YSÜM - Yerel Simetri Üstünlük Modeli")
-st.caption("Penrose Döşemeleri ve Geometrik Desenlerde Görsel Tabanlı Dönel Simetri Analiz Motoru")
+st.title("🌀 YSÜM - Yerel Simetri Üstünlük Modeli & Derma-YSÜM Analiz Motoru")
+st.caption("Penrose Döşemeleri, Geometrik Desenler ve Dermatolojik Asimetri Değerlendirmesinde Dönel Simetri Haritalama Motoru")
 
 # ------------------------------------------------------------------------------
-# DETAYLI BİLGİ VE TEORİ PANELİ (GÖRSELLİ VE SEKMELİ YAPI)
+# DETAYLI BİLGİ VE TEORİ PANELİ (5 SEKMELİ DİSİPLİNLER ARASI YAPI)
 # ------------------------------------------------------------------------------
-with st.expander("📌 Penrose Kaplamaları, YSÜM Matematiği ve Günlük Hayat Uygulamaları", expanded=True):
-    tab_teori1, tab_teori2, tab_teori3, tab_teori4 = st.tabs([
+with st.expander("📌 Penrose Kaplamaları, YSÜM Matematiği, Sanayi ve Tıbbi Asimetri Uygulamaları", expanded=True):
+    tab_teori1, tab_teori2, tab_teori3, tab_teori4, tab_teori5 = st.tabs([
         "📐 Penrose & Nobel Ödülü",
         "🧮 YSÜM ($U_k$) Matematiği",
         "🌐 Günlük Hayat ve Sanayi",
+        "🩺 Tıbbi Görüntülemede Asimetri (ABCDE)",
         "🕌 Mimari ve Tarihî Sanat"
     ])
 
@@ -107,6 +108,30 @@ with st.expander("📌 Penrose Kaplamaları, YSÜM Matematiği ve Günlük Hayat
 * **Tahribatsız Muayene (NDT):** Malzeme kılcal çatlaklarını bulur.""")
 
     with tab_teori4:
+        col_med1, col_med2 = st.columns([2, 1])
+        with col_med1:
+            st.markdown(r"""
+            ### 🩺 Tıbbi Görüntülemede Asimetri Değerlendirmesi (Dermatoloji)
+            * **Uluslararası ABCDE Kuralı:** Dermatolojide cilt lezyonlarının (ben, leke) kötü huylu (melanom) olup olmadığını değerlendirmek için kullanılan kriterlerin başında **"A - Asymmetry" (Asimetri)** gelir.
+            * **Matematiksel Mantık Paralelliği:** YSÜM modelinin sorduğu *"Bir şekil ne kadar simetriktir ve bu sapma rastgele mi yoksa anlamlı mı?"* sorusu, lezyon sınırlarının simetriden sapmasını ölçen tıbbi yaklaşımla tam olarak aynı kavramsal temele dayanır.
+            * **Şans Arındırmalı $U$ Skoru:** Şekil sınırının simetriden sapmasını gürültüden arındırılmış sayısal bir değerle ifade etme mantığı, tıbbi lezyon sınır analizlerine teorik bir ilham sunmaktadır.
+            * **Etik ve Bilimsel Çerçeve:** Bu yazılım bir tıbbi teşhis aracı değildir ve tıbbi amaçla test edilmemiştir. Ancak matematiksel modelin gelecekte tıbbi görüntüleme ve adli bilimler gibi alan uzmanlarıyla geliştirilebileceğini kanıtlamaktadır.
+            """)
+        with col_med2:
+            fig_m, ax_m = plt.subplots(figsize=(3, 3), dpi=100)
+            ax_m.set_facecolor("#f8f9fa")
+            theta = np.linspace(0, 2*np.pi, 200)
+            r_sym = 0.8 + 0.05 * np.cos(5*theta)
+            r_asym = 0.8 + 0.25 * np.sin(3*theta) + 0.1 * np.cos(7*theta)
+            ax_m.plot(r_sym * np.cos(theta), r_sym * np.sin(theta), "g--", label="Simetrik (Normal)", lw=1.5)
+            ax_m.plot(r_asym * np.cos(theta), r_asym * np.sin(theta), "r-", label="Asimetrik Lezyon (A)", lw=1.8)
+            ax_m.set_title("ABCDE 'A' Asimetri Şeması", fontsize=8, color="darkred", pad=4)
+            ax_m.legend(fontsize=7, loc="lower right")
+            ax_m.axis("off")
+            st.pyplot(fig_m)
+            plt.close(fig_m)
+
+    with tab_teori5:
         col_g1, col_g2 = st.columns([2, 1])
         with col_g1:
             st.markdown(r"""
@@ -131,7 +156,7 @@ with st.expander("📌 Penrose Kaplamaları, YSÜM Matematiği ve Günlük Hayat
 st.sidebar.header("⚙️ Analiz Ayarları")
 k_secim = st.sidebar.selectbox(
     "Simetri Kat Sayısı (k):",
-    ["Hepsini Otomatik Tara", "k=5 (Penrose/Beşgen)", "k=6 (Altıgen)", "k=8 (Sekizgen)"]
+    ["Hepsini Otomatik Tara", "k=2 (Dermatolojik İki Eksenli Asimetri)", "k=5 (Penrose/Beşgen)", "k=6 (Altıgen)", "k=8 (Sekizgen)"]
 )
 
 b_modu = st.sidebar.radio(
@@ -159,7 +184,14 @@ with col_input1:
 
 with col_input2:
     st.markdown("**Veya Örnek Desen Üretin:**")
-    ornek_tipi = st.selectbox("Hızlı Test Deseni Seçin:", ["Yüklenen Resmi Kullan", "Örnek 5-Katlı Yıldız Desen", "Örnek 8-Katlı Girih Motifi", "Örnek Rastgele Gürültü"])
+    ornek_tipi = st.selectbox("Hızlı Test Deseni Seçin:", [
+        "Yüklenen Resmi Kullan", 
+        "🩺 Örnek 1: Normal Simetrik Ben (İyi Huylu)",
+        "🩺 Örnek 2: Asimetrik Lezyon (Şüpheli Melanom)",
+        "📐 Örnek 3: 5-Katlı Yıldız Desen", 
+        "🕌 Örnek 4: 8-Katlı Girih Motifi", 
+        "🎲 Örnek 5: Rastgele Gürültü"
+    ])
 
 # Sentetik Örnek Görsel Oluşturucu Fonksiyon
 def ornek_desen_olustur(tip):
@@ -168,7 +200,12 @@ def ornek_desen_olustur(tip):
     draw = ImageDraw.Draw(img_pil)
     cx, cy = w // 2, h // 2
     
-    if tip == "Örnek 5-Katlı Yıldız Desen":
+    if "Normal Simetrik Ben" in tip:
+        draw.ellipse([cx - 45, cy - 45, cx + 45, cy + 45], fill=200, outline=255)
+    elif "Asimetrik Lezyon" in tip:
+        draw.ellipse([cx - 50, cy - 35, cx + 25, cy + 45], fill=180, outline=255)
+        draw.polygon([(cx, cy), (cx + 55, cy - 40), (cx + 40, cy + 20)], fill=150)
+    elif "5-Katlı Yıldız" in tip:
         for r in range(15, 85, 12):
             points = []
             for i in range(10):
@@ -178,7 +215,7 @@ def ornek_desen_olustur(tip):
                 y = cy + int(radius * np.sin(angle))
                 points.append((x, y))
             draw.polygon(points, outline=255, fill=120 if r % 24 == 0 else 0)
-    elif tip == "Örnek 8-Katlı Girih Motifi":
+    elif "8-Katlı Girih" in tip:
         for r in range(20, 90, 15):
             points = []
             for i in range(16):
@@ -188,7 +225,7 @@ def ornek_desen_olustur(tip):
                 y = cy + int(radius * np.sin(angle))
                 points.append((x, y))
             draw.polygon(points, outline=255, fill=180 if r % 30 == 0 else 0)
-    elif tip == "Örnek Rastgele Gürültü":
+    elif "Rastgele Gürültü" in tip:
         arr = np.random.randint(0, 256, (h, w), dtype=np.uint8)
         return arr
         
@@ -262,14 +299,16 @@ if resim_np is not None:
         st.markdown("---")
         st.subheader("🖼️ Görsel Tabanlı Dönel Simetri Isı Haritası Analizi")
 
-        if "5" in k_secim:
+        if "2" in k_secim:
+            k_listesi = [2]
+        elif "5" in k_secim:
             k_listesi = [5]
         elif "6" in k_secim:
             k_listesi = [6]
         elif "8" in k_secim:
             k_listesi = [8]
         else:
-            k_listesi = [5, 6, 8]
+            k_listesi = [2, 5, 6, 8]
 
         cols = st.columns(len(k_listesi))
         skorlar = {}
@@ -325,8 +364,8 @@ if resim_np is not None:
         rep_tab1, rep_tab2, rep_tab3, rep_tab4 = st.tabs([
             "📊 Sayısal Özet & İstatistiksel Doğrulama",
             "🔍 Geometrik Odak Koordinatları",
-            "🏭 Endüstriyel Kalite Kontrol Kararı",
-            "🏛️ Mimari Restorasyon Rehberi"
+            "🩺 Dermatolojik Asimetri Kararı (ABCDE)",
+            "🏭 Endüstriyel Kalite Kontrol Kararı"
         ])
 
         neg_ort = 0.0
@@ -367,20 +406,21 @@ if resim_np is not None:
             """)
 
         with rep_tab3:
+            k2_skor = skorlar.get(2, baskin_ort)
+            if k2_skor > 0.45:
+                st.success("🟢 **DERMATOLOJİK SİMETRİ DEĞERLENDİRMESİ: DÜŞÜK ASİMETRİ (DÜZENLİ BİÇİM)**\n\nLezyon sınırları iki eksende yüksek simetri gösteriyor. Biçimsel yapı düzgün ve homojendir.")
+            elif k2_skor > 0.15:
+                st.warning("🟡 **DERMATOLOJİK SİMETRİ DEĞERLENDİRMESİ: ORTA DERECE ASİMETRİ (ŞÜPHELİ SINIR)**\n\nLezyon sınırlarında asimetrik sapmalar mevcuttur. ABCDE kuralının 'A' kriteri açısından sınır takibi önerilir.")
+            else:
+                st.error("🔴 **DERMATOLOJİK SİMETRİ DEĞERLENDİRMESİ: YÜKSEK STRÜKTÜREL ASİMETRİ**\n\nLezyon sınırları simetriden belirgin şekilde sapmaktadır. ABCDE kuralında 'A' kriteri pozitif olarak işaretlenmiştir.")
+
+        with rep_tab4:
             if baskin_ort > 0.40:
                 st.success("🟢 **FABRİKA OTOMASYON KARARI: ONAYLANDI (PASS)**\n\nÜrün simetri standartlarına %100 uygundur. Üretim bandından sevkiyata aktarılabilir.")
             elif baskin_ort > 0.15:
                 st.warning("🟡 **FABRİKA OTOMASYON KARARI: İNCELEME GEREKLİ (MARGINAL)**\n\nYüzeyde hafif baskı hatası veya asimetri tespit edildi. Kalite kontrol personeli tarafından kontrol edilmelidir.")
             else:
                 st.error("🔴 **FABRİKA OTOMASYON KARARI: HATALI ÜRÜN (FAIL)**\n\nDesende ciddi bozulma veya eksik baskı var. Ürün üretim bandından ayrılmalıdır.")
-
-        with rep_tab4:
-            angle_deg = 360.0 / baskin_k
-            st.info(f"""
-            ### 🏛️ Mimari Restorasyon Teknik Rehberi
-            * **Analiz Edilen Yapı:** {baskin_k}-Katlı Geometrik Düzen
-            * **Önerilen İşlem:** Orijinal merkez koordinatları `(X: {top_coords_dict[baskin_k][0][0]}, Y: {top_coords_dict[baskin_k][0][1]})` baz alınarak {angle_deg:.1f}° açısal şablonla çini/taş kaplama eksikleri tamamlanabilir.
-            """)
 
         # ----------------------------------------------------------------------
         # NEGATİF KONTROL SEKSİYONU (GÖRSELLER VE ISI HARİTALARI İLE BİRLİKTE)
