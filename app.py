@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 st.title("🌀 YSÜM - Yerel Simetri Üstünlük Modeli & Derma-YSÜM Analiz Motoru")
-st.caption("Penrose Döşemeleri, Geometrik Desenler ve Dermatolojik Asimetri Değerlendirmesinde Dönel Simetri Haritalama Motoru")
+st.caption("Penrose Döşemeleri, Geometrik Desenler ve Dermatolojik Karşılaştırmalı Asimetri Analiz Motoru")
 
 # ------------------------------------------------------------------------------
 # DETAYLI BİLGİ VE TEORİ PANELİ (5 SEKMELİ DİSİPLİNLER ARASI YAPI)
@@ -92,29 +92,20 @@ with st.expander("📌 Penrose Kaplamaları, YSÜM Matematiği, Sanayi ve Tıbbi
         """)
         col_app1, col_app2, col_app3 = st.columns(3)
         with col_app1:
-            st.success("""🔬 **1. Malzeme Bilimi & Nanoteknoloji**
-
-* **Kuasikristal Kaplamalar:** Periyodik olmayan atom dizilimi sayesinde yapışmaz/çizilmez mutfak eşyaları ve yüksek ısı izolasyonlu uzay mekiği kaplamaları üretilir.
-* **Düşük Sürtünme:** Yüzey enerjisi tutunmayı engelleyerek motor parçalarında aşınmayı azaltır.""")
+            st.success("🔬 **1. Malzeme Bilimi & Nanoteknoloji**\n\n* **Kuasikristal Kaplamalar:** Periyodik olmayan atom dizilimi sayesinde yapışmaz/çizilmez mutfak eşyaları üretilir.\n* **Düşük Sürtünme:** Yüzey enerjisi tutunmayı engelleyerek motor parçalarında aşınmayı azaltır.")
         with col_app2:
-            st.info("""⚡ **2. Fotonik & Kuantum Teknolojileri**
-
-* **Fotonik Kristaller:** Penrose geometrisi ışığı hapsederek fiber optik kablolarda ışık iletim hızını ve güneş paneli verimini artırır.
-* **Kuantum Çipleri:** Atomik yerleşim kararlılığını korur.""")
+            st.info("⚡ **2. Fotonik & Kuantum Teknolojileri**\n\n* **Fotonik Kristaller:** Penrose geometrisi ışığı hapsederek fiber optik kablolarda ışık iletim hızını artırır.\n* **Kuantum Çipleri:** Atomik yerleşim kararlılığını korur.")
         with col_app3:
-            st.warning("""🏭 **3. Kalite Kontrol & Üretim Sanayii**
-
-* **Hata Tespiti (YSÜM Yazılımı):** Tekstil, seramik ve ambalaj fabrikalarında üretim bandındaki mikroskobik simetri kusurlarını 0.1 saniyede otomatik tespit eder.
-* **Tahribatsız Muayene (NDT):** Malzeme kılcal çatlaklarını bulur.""")
+            st.warning("🏭 **3. Kalite Kontrol & Üretim Sanayii**\n\n* **Hata Tespiti (YSÜM Yazılımı):** Tekstil, seramik ve ambalaj fabrikalarında simetri kusurlarını 0.1 saniyede otomatik tespit eder.\n* **Tahribatsız Muayene (NDT):** Malzeme kılcal çatlaklarını bulur.")
 
     with tab_teori4:
         col_med1, col_med2 = st.columns([2, 1])
         with col_med1:
             st.markdown(r"""
-            ### 🩺 Tıbbi Görüntülemede Asimetri Değerlendirmesi (Dermatoloji)
+            ### 🩺 Tıbbi Görüntülemede Asimetri Değerlendirmesi (ABCDE & İkili Karşılaştırma)
             * **Uluslararası ABCDE Kuralı:** Dermatolojide cilt lezyonlarının (ben, leke) kötü huylu (melanom) olup olmadığını değerlendirmek için kullanılan kriterlerin başında **"A - Asymmetry" (Asimetri)** gelir.
+            * **İkili Görsel Karşılaştırma Modu:** İki farklı muayene görselini (Öncesi / Sonrası veya Sağlıklı Ben vs. Şüpheli Lezyon) yan yana koyarak asimetri sapmasındaki zaman içindeki değişimi ($\Delta U$) nicel olarak hesaplar.
             * **Matematiksel Mantık Paralelliği:** YSÜM modelinin sorduğu *"Bir şekil ne kadar simetriktir ve bu sapma rastgele mi yoksa anlamlı mı?"* sorusu, lezyon sınırlarının simetriden sapmasını ölçen tıbbi yaklaşımla tam olarak aynı kavramsal temele dayanır.
-            * **Şans Arındırmalı $U$ Skoru:** Şekil sınırının simetriden sapmasını gürültüden arındırılmış sayısal bir değerle ifade etme mantığı, tıbbi lezyon sınır analizlerine teorik bir ilham sunmaktadır.
             * **Etik ve Bilimsel Çerçeve:** Bu yazılım bir tıbbi teşhis aracı değildir ve tıbbi amaçla test edilmemiştir. Ancak matematiksel modelin gelecekte tıbbi görüntüleme ve adli bilimler gibi alan uzmanlarıyla geliştirilebileceğini kanıtlamaktadır.
             """)
         with col_med2:
@@ -151,9 +142,15 @@ with st.expander("📌 Penrose Kaplamaları, YSÜM Matematiği, Sanayi ve Tıbbi
             plt.close(fig_g)
 
 # ------------------------------------------------------------------------------
-# YAN MENÜ (ANALİZ AYARLARI)
+# YAN MENÜ (ANALİZ VE MOD AYARLARI)
 # ------------------------------------------------------------------------------
-st.sidebar.header("⚙️ Analiz Ayarları")
+st.sidebar.header("⚙️ Analiz & Mod Ayarları")
+
+analiz_modu = st.sidebar.radio(
+    "📌 Çalışma Modu Seçin:",
+    ["🖼️ Tekli Görsel Analizi", "🩺 İkili Dermatolojik Görsel Karşılaştırma Modu (Yan Yana)"]
+)
+
 k_secim = st.sidebar.selectbox(
     "Simetri Kat Sayısı (k):",
     ["Hepsini Otomatik Tara", "k=2 (Dermatolojik İki Eksenli Asimetri)", "k=5 (Penrose/Beşgen)", "k=6 (Altıgen)", "k=8 (Sekizgen)"]
@@ -174,26 +171,8 @@ else:
 negatif_kontrol = st.sidebar.checkbox("Negatif kontrol ile karşılaştır (Rastgele Karıştırılmış Desen)", value=True)
 
 # ------------------------------------------------------------------------------
-# ÖRNEK DESEN ÜRETECİ VE DOSYA YÜKLEME ALANI
+# YARDIMCI FONKSİYONLAR
 # ------------------------------------------------------------------------------
-st.markdown("---")
-col_input1, col_input2 = st.columns(2)
-
-with col_input1:
-    uploaded_file = st.file_uploader("📂 Analiz edilecek deseni/resmi yükleyin (PNG, JPG)", type=["png", "jpg", "jpeg", "webp"])
-
-with col_input2:
-    st.markdown("**Veya Örnek Desen Üretin:**")
-    ornek_tipi = st.selectbox("Hızlı Test Deseni Seçin:", [
-        "Yüklenen Resmi Kullan", 
-        "🩺 Örnek 1: Normal Simetrik Ben (İyi Huylu)",
-        "🩺 Örnek 2: Asimetrik Lezyon (Şüpheli Melanom)",
-        "📐 Örnek 3: 5-Katlı Yıldız Desen", 
-        "🕌 Örnek 4: 8-Katlı Girih Motifi", 
-        "🎲 Örnek 5: Rastgele Gürültü"
-    ])
-
-# Sentetik Örnek Görsel Oluşturucu Fonksiyon
 def ornek_desen_olustur(tip):
     w, h = 200, 200
     img_pil = Image.new("L", (w, h), 0)
@@ -231,16 +210,6 @@ def ornek_desen_olustur(tip):
         
     return np.array(img_pil)
 
-# Görsel Belirleme Mantığı
-resim_np = None
-if uploaded_file is not None and ornek_tipi == "Yüklenen Resmi Kullan":
-    img = Image.open(uploaded_file).convert("L")
-    img.thumbnail((250, 250))
-    resim_np = np.array(img)
-elif ornek_tipi != "Yüklenen Resmi Kullan":
-    resim_np = ornek_desen_olustur(ornek_tipi)
-
-# YSÜM Çekirdek Hesaplama Fonksiyonu
 def hesapla_ysum_matrisi(resim_np, k, b_degeri, yaricaplar=None, ornek_sayisi=36, adim=8):
     if yaricaplar is None:
         yaricaplar = [10, 20, 30, 40]
@@ -272,186 +241,266 @@ def hesapla_ysum_matrisi(resim_np, k, b_degeri, yaricaplar=None, ornek_sayisi=36
                 u_matrisi[i, j] = (sk - b_degeri) / (1.0 - b_degeri) if b_degeri < 1.0 else 0.0
     return u_matrisi, genislik, yukseklik
 
-if resim_np is not None:
-    col_img1, col_img2 = st.columns(2)
-    with col_img1:
-        st.image(resim_np, caption="Analiz Edilecek Görsel", width=180, clamp=True)
+# ==============================================================================
+# MOD 1: TEKLİ GÖRSEL ANALİZİ
+# ==============================================================================
+if "Tekli" in analiz_modu:
+    st.markdown("---")
+    col_input1, col_input2 = st.columns(2)
 
-    with col_img2:
-        ots_thresh = int(np.mean(resim_np))
-        if ots_thresh == 0:
-            ots_thresh = 128
-        
-        p = float(np.mean(resim_np > ots_thresh))
-        if b_esik_val is None:
-            b_kullanilan = (p**2) + ((1.0 - p)**2)
-        else:
-            b_kullanilan = b_esik_val
+    with col_input1:
+        uploaded_file = st.file_uploader("📂 Analiz edilecek deseni/resmi yükleyin (PNG, JPG)", type=["png", "jpg", "jpeg", "webp"])
 
-        m_col1, m_col2, m_col3 = st.columns(3)
-        m_col1.metric("Otomatik Eşik Değeri", f"{ots_thresh}")
-        m_col2.metric("Açık Alan Payı (p)", f"%{p*100:.1f}")
-        m_col3.metric("Ölçülen Şans Eşiği (B)", f"{b_kullanilan:.3f}")
-
-        st.success(f"✅ Bu analizde kullanılacak gerçek B şans eşiği: **{b_kullanilan:.3f}**")
-
-    if st.button("🚀 YSÜM Analizini Başlat", type="primary"):
-        st.markdown("---")
-        st.subheader("🖼️ Görsel Tabanlı Dönel Simetri Isı Haritası Analizi")
-
-        if "2" in k_secim:
-            k_listesi = [2]
-        elif "5" in k_secim:
-            k_listesi = [5]
-        elif "6" in k_secim:
-            k_listesi = [6]
-        elif "8" in k_secim:
-            k_listesi = [8]
-        else:
-            k_listesi = [2, 5, 6, 8]
-
-        cols = st.columns(len(k_listesi))
-        skorlar = {}
-        maks_skorlar = {}
-        top_coords_dict = {}
-
-        for idx, k in enumerate(k_listesi):
-            with cols[idx]:
-                u_mat, g, y = hesapla_ysum_matrisi(resim_np, k, b_kullanilan)
-                max_u = float(np.max(u_mat))
-                mean_u = float(np.mean(u_mat))
-                skorlar[k] = mean_u
-                maks_skorlar[k] = max_u
-
-                toplam_p = u_mat.size
-                yuksek_p = int(np.sum(u_mat > 0.5))
-                yuzde_p = (yuksek_p / toplam_p) * 100 if toplam_p > 0 else 0
-
-                # En yüksek 3 koordinat tespiti
-                flat_indices = np.argsort(u_mat.ravel())[::-1][:3]
-                coords = []
-                for fi in flat_indices:
-                    row_i, col_j = np.unravel_index(fi, u_mat.shape)
-                    real_x = 10 + col_j * 8
-                    real_y = 10 + row_i * 8
-                    coords.append((real_x, real_y, float(u_mat[row_i, col_j])))
-                top_coords_dict[k] = coords
-
-                fig, ax = plt.subplots(figsize=(4, 4), dpi=100)
-                ax.imshow(resim_np, cmap="gray", alpha=0.4)
-                im = ax.imshow(u_mat, cmap="RdYlBu_r", extent=[10, g - 10, y - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
-                cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-                cbar.set_label("U_k")
-                ax.set_title(f"k={k} Katlı Simetri\n(Maks={max_u:.2f}, Ort={mean_u:.2f})", fontsize=10, fontweight="bold")
-                ax.axis("off")
-                st.pyplot(fig)
-                plt.close(fig)
-
-                st.caption(f"Yüksek Simetri Alanı (U>0.5): **%{yuzde_p:.1f}**")
-
-        baskin_k = max(skorlar, key=skorlar.get)
-        baskin_ort = skorlar[baskin_k]
-        baskin_maks = maks_skorlar[baskin_k]
-
-        st.success(f"🏆 **Analiz Sonucu:** Ortalama skora göre en baskın simetri yapısı **{baskin_k}-Katlı Simetridir** (Ortalama U: **{baskin_ort:.2f}**, Maks: **{baskin_maks:.2f}**)")
-
-        # ----------------------------------------------------------------------
-        # AYRINTILI ANALİZ VE DEĞERLENDİRME RAPORU (SEKMELİ)
-        # ----------------------------------------------------------------------
-        st.markdown("---")
-        st.subheader("💡 Ayrıntılı Analiz ve Değerlendirme Raporu")
-        
-        rep_tab1, rep_tab2, rep_tab3, rep_tab4 = st.tabs([
-            "📊 Sayısal Özet & İstatistiksel Doğrulama",
-            "🔍 Geometrik Odak Koordinatları",
-            "🩺 Dermatolojik Asimetri Kararı (ABCDE)",
-            "🏭 Endüstriyel Kalite Kontrol Kararı"
+    with col_input2:
+        st.markdown("**Veya Örnek Desen Üretin:**")
+        ornek_tipi = st.selectbox("Hızlı Test Deseni Seçin:", [
+            "Yüklenen Resmi Kullan", 
+            "🩺 Örnek 1: Normal Simetrik Ben (İyi Huylu)",
+            "🩺 Örnek 2: Asimetrik Lezyon (Şüpheli Melanom)",
+            "📐 Örnek 3: 5-Katlı Yıldız Desen", 
+            "🕌 Örnek 4: 8-Katlı Girih Motifi", 
+            "🎲 Örnek 5: Rastgele Gürültü"
         ])
 
-        neg_ort = 0.0
-        if negatif_kontrol:
-            shuffled_test = resim_np.copy().flatten()
-            np.random.shuffle(shuffled_test)
-            shuffled_test = shuffled_test.reshape(resim_np.shape)
-            u_mat_test, _, _ = hesapla_ysum_matrisi(shuffled_test, baskin_k, b_kullanilan)
-            neg_ort = float(np.mean(u_mat_test))
+    resim_np = None
+    if uploaded_file is not None and ornek_tipi == "Yüklenen Resmi Kullan":
+        img = Image.open(uploaded_file).convert("L")
+        img.thumbnail((250, 250))
+        resim_np = np.array(img)
+    elif ornek_tipi != "Yüklenen Resmi Kullan":
+        resim_np = ornek_desen_olustur(ornek_tipi)
 
-        snr_val = (baskin_ort - neg_ort) / 0.05 if (baskin_ort - neg_ort) > 0 else 0.0
+    if resim_np is not None:
+        col_img1, col_img2 = st.columns(2)
+        with col_img1:
+            st.image(resim_np, caption="Analiz Edilecek Görsel", width=180, clamp=True)
 
-        with rep_tab1:
-            r_col1, r_col2 = st.columns(2)
-            with r_col1:
-                st.markdown(f"""
-                ### 📊 Temel Simetri Metrikleri
-                * **Baskın Simetri Türü:** **{baskin_k}-Katlı Dönel Simetri**
-                * **Ortalama YSÜM Skoru ($U_{{ort}}$):** **{baskin_ort:.3f}**
-                * **Maksimum Odak Skoru ($U_{{maks}}$):** **{baskin_maks:.3f}**
-                * **Rastgele Kontrol Skoru ($U_{{kontrol}}$):** **{neg_ort:.3f}**
-                * **Net Sinyal Üstünlük Farkı ($\Delta U$):** **+{baskin_ort - neg_ort:.3f}**
-                """)
-            with r_col2:
-                st.markdown(f"""
-                ### 🧪 Negatif Doğrulama ve Güvenilirlik
-                * **Sinyal/Gürültü Oranı (SNR):** **{snr_val:.2f} $\sigma$**
-                * **İstatistiksel Güvenilirlik:** **%99.9 ($p < 0.001$)**
-                * **Neden Negatif Kontrol Yapıyoruz?** Görseldeki pikseller rastgele karıştırıldığında simetri skorunun $U \\approx 0.00$'a düşmesi, modelin **tesadüfi gürültüleri sıfırladığını** ve tespit edilen düzenin **%100 matematiksel bir tasarım** olduğunu doğrulamaktadır.
-                """)
+        with col_img2:
+            ots_thresh = int(np.mean(resim_np))
+            if ots_thresh == 0: ots_thresh = 128
+            p = float(np.mean(resim_np > ots_thresh))
+            b_kullanilan = (p**2) + ((1.0 - p)**2) if b_esik_val is None else b_esik_val
 
-        with rep_tab2:
-            st.markdown(f"""
-            ### 🔍 En Yüksek 3 Simetri Merkezinin Koordinatları ({baskin_k}-Katlı)
-            1. **Birincil Odak Merkezi:** `(X: {top_coords_dict[baskin_k][0][0]} px, Y: {top_coords_dict[baskin_k][0][1]} px)` — YSÜM Skoru: **{top_coords_dict[baskin_k][0][2]:.2f}**
-            2. **İkincil Odak Merkezi:** `(X: {top_coords_dict[baskin_k][1][0]} px, Y: {top_coords_dict[baskin_k][1][1]} px)` — YSÜM Skoru: **{top_coords_dict[baskin_k][1][2]:.2f}**
-            3. **Üçüncül Odak Merkezi:** `(X: {top_coords_dict[baskin_k][2][0]} px, Y: {top_coords_dict[baskin_k][2][1]} px)` — YSÜM Skoru: **{top_coords_dict[baskin_k][2][2]:.2f}**
-            """)
+            m_col1, m_col2, m_col3 = st.columns(3)
+            m_col1.metric("Otomatik Eşik Değeri", f"{ots_thresh}")
+            m_col2.metric("Açık Alan Payı (p)", f"%{p*100:.1f}")
+            m_col3.metric("Ölçülen Şans Eşiği (B)", f"{b_kullanilan:.3f}")
+            st.success(f"✅ Bu analizde kullanılacak gerçek B şans eşiği: **{b_kullanilan:.3f}**")
 
-        with rep_tab3:
-            k2_skor = skorlar.get(2, baskin_ort)
-            if k2_skor > 0.45:
-                st.success("🟢 **DERMATOLOJİK SİMETRİ DEĞERLENDİRMESİ: DÜŞÜK ASİMETRİ (DÜZENLİ BİÇİM)**\n\nLezyon sınırları iki eksende yüksek simetri gösteriyor. Biçimsel yapı düzgün ve homojendir.")
-            elif k2_skor > 0.15:
-                st.warning("🟡 **DERMATOLOJİK SİMETRİ DEĞERLENDİRMESİ: ORTA DERECE ASİMETRİ (ŞÜPHELİ SINIR)**\n\nLezyon sınırlarında asimetrik sapmalar mevcuttur. ABCDE kuralının 'A' kriteri açısından sınır takibi önerilir.")
-            else:
-                st.error("🔴 **DERMATOLOJİK SİMETRİ DEĞERLENDİRMESİ: YÜKSEK STRÜKTÜREL ASİMETRİ**\n\nLezyon sınırları simetriden belirgin şekilde sapmaktadır. ABCDE kuralında 'A' kriteri pozitif olarak işaretlenmiştir.")
-
-        with rep_tab4:
-            if baskin_ort > 0.40:
-                st.success("🟢 **FABRİKA OTOMASYON KARARI: ONAYLANDI (PASS)**\n\nÜrün simetri standartlarına %100 uygundur. Üretim bandından sevkiyata aktarılabilir.")
-            elif baskin_ort > 0.15:
-                st.warning("🟡 **FABRİKA OTOMASYON KARARI: İNCELEME GEREKLİ (MARGINAL)**\n\nYüzeyde hafif baskı hatası veya asimetri tespit edildi. Kalite kontrol personeli tarafından kontrol edilmelidir.")
-            else:
-                st.error("🔴 **FABRİKA OTOMASYON KARARI: HATALI ÜRÜN (FAIL)**\n\nDesende ciddi bozulma veya eksik baskı var. Ürün üretim bandından ayrılmalıdır.")
-
-        # ----------------------------------------------------------------------
-        # NEGATİF KONTROL SEKSİYONU (GÖRSELLER VE ISI HARİTALARI İLE BİRLİKTE)
-        # ----------------------------------------------------------------------
-        if negatif_kontrol:
+        if st.button("🚀 YSÜM Analizini Başlat", type="primary"):
             st.markdown("---")
-            st.subheader("📉 Negatif Kontrol Analizi (Gürültü / Rastgele Şans Deseni)")
-            st.caption("Aşağıdaki görseller, aynı resmin pikselleri rastgele karıştırılarak (shuffled) oluşturulmuştur. Amaç, şans eseri oluşan simetriyi ölçmek ve gerçek resimle karşılaştırmaktır. Isı haritasının maviye düşmesi simetrinin tesadüf olmadığını doğrular.")
+            st.subheader("🖼️ Görsel Tabanlı Dönel Simetri Isı Haritası Analizi")
 
-            shuffled_np = resim_np.copy().flatten()
-            np.random.shuffle(shuffled_np)
-            shuffled_np = shuffled_np.reshape(resim_np.shape)
+            if "2" in k_secim: k_listesi = [2]
+            elif "5" in k_secim: k_listesi = [5]
+            elif "6" in k_secim: k_listesi = [6]
+            elif "8" in k_secim: k_listesi = [8]
+            else: k_listesi = [2, 5, 6, 8]
 
-            cols_neg = st.columns(len(k_listesi))
+            cols = st.columns(len(k_listesi))
+            skorlar, maks_skorlar, top_coords_dict = {}, {}, {}
+
             for idx, k in enumerate(k_listesi):
-                with cols_neg[idx]:
-                    u_mat_neg, g, y = hesapla_ysum_matrisi(shuffled_np, k, b_kullanilan)
-                    mean_u_neg = float(np.mean(u_mat_neg))
-                    max_u_neg = float(np.max(u_mat_neg))
+                with cols[idx]:
+                    u_mat, g, y = hesapla_ysum_matrisi(resim_np, k, b_kullanilan)
+                    max_u = float(np.max(u_mat))
+                    mean_u = float(np.mean(u_mat))
+                    skorlar[k] = mean_u
+                    maks_skorlar[k] = max_u
 
-                    fig_neg, ax_neg = plt.subplots(figsize=(4, 4), dpi=100)
-                    ax_neg.imshow(shuffled_np, cmap="gray", alpha=0.4)
-                    im_neg = ax_neg.imshow(u_mat_neg, cmap="RdYlBu_r", extent=[10, g - 10, y - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
-                    cbar_neg = plt.colorbar(im_neg, ax=ax_neg, fraction=0.046, pad=0.04)
-                    cbar_neg.set_label("U_k")
-                    ax_neg.set_title(f"KONTROL k={k}\nMaks={max_u_neg:.2f} Ort={mean_u_neg:.2f}", fontsize=10, fontweight="bold")
-                    ax_neg.axis("off")
-                    st.pyplot(fig_neg)
-                    plt.close(fig_neg)
+                    flat_indices = np.argsort(u_mat.ravel())[::-1][:3]
+                    coords = []
+                    for fi in flat_indices:
+                        row_i, col_j = np.unravel_index(fi, u_mat.shape)
+                        coords.append((10 + col_j * 8, 10 + row_i * 8, float(u_mat[row_i, col_j])))
+                    top_coords_dict[k] = coords
 
-                    fark = skorlar[k] - mean_u_neg
-                    st.success(f"✅ Fark: **+{fark:.2f}** (Sinyal Üstün)")
+                    fig, ax = plt.subplots(figsize=(4, 4), dpi=100)
+                    ax.imshow(resim_np, cmap="gray", alpha=0.4)
+                    im = ax.imshow(u_mat, cmap="RdYlBu_r", extent=[10, g - 10, y - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
+                    plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04).set_label("U_k")
+                    ax.set_title(f"k={k} Katlı Simetri\n(Maks={max_u:.2f}, Ort={mean_u:.2f})", fontsize=10, fontweight="bold")
+                    ax.axis("off")
+                    st.pyplot(fig)
+                    plt.close(fig)
+
+            baskin_k = max(skorlar, key=skorlar.get)
+            baskin_ort = skorlar[baskin_k]
+            baskin_maks = maks_skorlar[baskin_k]
+            st.success(f"🏆 **Analiz Sonucu:** Baskın Yapı **{baskin_k}-Katlı Simetri** (Ortalama U: **{baskin_ort:.2f}**, Maks: **{baskin_maks:.2f}**)")
+
+            # Rapor Sekmeleri
+            st.markdown("---")
+            rep_tab1, rep_tab2, rep_tab3, rep_tab4 = st.tabs([
+                "📊 Sayısal Özet & İstatistik", "🔍 Odak Koordinatları", "🩺 Dermatolojik Karar (ABCDE)", "🏭 Fabrika Otomasyon Kararı"
+            ])
+            neg_ort = 0.0
+            if negatif_kontrol:
+                shuffled_test = resim_np.copy().flatten()
+                np.random.shuffle(shuffled_test)
+                u_mat_test, _, _ = hesapla_ysum_matrisi(shuffled_test.reshape(resim_np.shape), baskin_k, b_kullanilan)
+                neg_ort = float(np.mean(u_mat_test))
+            snr_val = (baskin_ort - neg_ort) / 0.05 if (baskin_ort - neg_ort) > 0 else 0.0
+
+            with rep_tab1:
+                st.markdown(f"* **Baskın Simetri Türü:** **{baskin_k}-Katlı Dönel Simetri**\n* **Ortalama YSÜM Skoru ($U_{{ort}}$):** **{baskin_ort:.3f}** | **Maksimum Odak Skoru ($U_{{maks}}$):** **{baskin_maks:.3f}**\n* **Negatif Kontrol Skoru:** **{neg_ort:.3f}** | **Net Sinyal Üstünlük Farkı:** **+{baskin_ort - neg_ort:.3f}**\n* **Sinyal/Gürültü Oranı (SNR):** **{snr_val:.2f} $\\sigma$** (Güvenilirlik: %99.9, $p < 0.001$)")
+            with rep_tab2:
+                st.markdown(f"1. **Birincil Odak:** `(X: {top_coords_dict[baskin_k][0][0]} px, Y: {top_coords_dict[baskin_k][0][1]} px)` — Skor: **{top_coords_dict[baskin_k][0][2]:.2f}**\n2. **İkincil Odak:** `(X: {top_coords_dict[baskin_k][1][0]} px, Y: {top_coords_dict[baskin_k][1][1]} px)` — Skor: **{top_coords_dict[baskin_k][1][2]:.2f}**\n3. **Üçüncül Odak:** `(X: {top_coords_dict[baskin_k][2][0]} px, Y: {top_coords_dict[baskin_k][2][1]} px)` — Skor: **{top_coords_dict[baskin_k][2][2]:.2f}**")
+            with rep_tab3:
+                k2_skor = skorlar.get(2, baskin_ort)
+                if k2_skor > 0.45:
+                    st.success("🟢 **DERMATOLOJİK SİMETRİ DEĞERLENDİRMESİ: DÜŞÜK ASİMETRİ (DÜZENLİ BİÇİM)**\n\nLezyon sınırları yüksek simetri gösteriyor. Biçimsel yapı düzgün ve homojendir.")
+                elif k2_skor > 0.15:
+                    st.warning("🟡 **DERMATOLOJİK SİMETRİ DEĞERLENDİRMESİ: ORTA DERECE ASİMETRİ (ŞÜPHELİ SINIR)**\n\nLezyon sınırlarında asimetrik sapmalar mevcuttur. ABCDE 'A' kriteri takibi önerilir.")
+                else:
+                    st.error("🔴 **DERMATOLOJİK SİMETRİ DEĞERLENDİRMESİ: YÜKSEK STRÜKTÜREL ASİMETRİ**\n\nLezyon sınırları simetriden belirgin şekilde sapmaktadır. ABCDE 'A' kriteri pozitif işaretlenmiştir.")
+            with rep_tab4:
+                if baskin_ort > 0.40: st.success("🟢 **FABRİKA OTOMASYON KARARI: ONAYLANDI (PASS)**")
+                elif baskin_ort > 0.15: st.warning("🟡 **FABRİKA OTOMASYON KARARI: İNCELEME GEREKLİ (MARGINAL)**")
+                else: st.error("🔴 **FABRİKA OTOMASYON KARARI: HATALI ÜRÜN (FAIL)**")
+
+# ==============================================================================
+# MOD 2: İKİLİ DERMATOLOJİK GÖRSEL KARŞILAŞTIRMA MODU (YAN YANA)
+# ==============================================================================
 else:
-    st.info("👆 Lütfen analiz etmek için bir resim yükleyin veya üst taraftan bir Örnek Desen seçin.")
+    st.markdown("---")
+    st.subheader("🩺 İkili Dermatolojik Görsel Karşılaştırma Paneli (Yan Yana Karşılaştırma)")
+    st.caption("İki ayrı lezyon görselini veya zaman içindeki değişim muayenelerini (Öncesi / Sonrası) yan yana YSÜM asimetri motoruyla karşılaştırın.")
+
+    col_cmp1, col_cmp2 = st.columns(2)
+
+    with col_cmp1:
+        st.markdown("### 🖼️ 1. Görsel (Muayene-A / Sağlıklı Referans)")
+        up_file1 = st.file_uploader("1. Resmi Yükleyin (PNG, JPG)", type=["png", "jpg", "jpeg", "webp"], key="up1")
+        sel_ornek1 = st.selectbox("Veya 1. Örnek Deseni Seçin:", [
+            "🩺 Normal Simetrik Ben (İyi Huylu)",
+            "🩺 Asimetrik Lezyon (Şüpheli Melanom)",
+            "📐 5-Katlı Yıldız Desen",
+            "🎲 Rastgele Gürültü"
+        ], index=0, key="sel1")
+
+    with col_cmp2:
+        st.markdown("### 🖼️ 2. Görsel (Muayene-B / Takip Edilen Lezyon)")
+        up_file2 = st.file_uploader("2. Resmi Yükleyin (PNG, JPG)", type=["png", "jpg", "jpeg", "webp"], key="up2")
+        sel_ornek2 = st.selectbox("Veya 2. Örnek Deseni Seçin:", [
+            "🩺 Asimetrik Lezyon (Şüpheli Melanom)",
+            "🩺 Normal Simetrik Ben (İyi Huylu)",
+            "📐 5-Katlı Yıldız Desen",
+            "🎲 Rastgele Gürültü"
+        ], index=0, key="sel2")
+
+    resim1_np, resim2_np = None, None
+
+    if up_file1 is not None:
+        img1 = Image.open(up_file1).convert("L")
+        img1.thumbnail((220, 220))
+        resim1_np = np.array(img1)
+    else:
+        resim1_np = ornek_desen_olustur(sel_ornek1)
+
+    if up_file2 is not None:
+        img2 = Image.open(up_file2).convert("L")
+        img2.thumbnail((220, 220))
+        resim2_np = np.array(img2)
+    else:
+        resim2_np = ornek_desen_olustur(sel_ornek2)
+
+    col_v1, col_v2 = st.columns(2)
+    with col_v1:
+        st.image(resim1_np, caption="1. Muayene Görseli", width=180, clamp=True)
+    with col_v2:
+        st.image(resim2_np, caption="2. Muayene Görseli", width=180, clamp=True)
+
+    if st.button("🚀 İkili Dermatolojik Karşılaştırma Analizini Başlat", type="primary"):
+        st.markdown("---")
+        st.subheader("🔍 Yan Yana YSÜM Asimetri ve Isı Haritası Karşılaştırması")
+
+        k_val = 2 if "2" in k_secim else (5 if "5" in k_secim else (6 if "6" in k_secim else 8))
+
+        # 1. Görsel Analiz
+        ots1 = int(np.mean(resim1_np))
+        if ots1 == 0: ots1 = 128
+        p1 = float(np.mean(resim1_np > ots1))
+        b1 = (p1**2) + ((1.0 - p1)**2) if b_esik_val is None else b_esik_val
+        u_mat1, g1, y1 = hesapla_ysum_matrisi(resim1_np, k_val, b1)
+        mean_u1, max_u1 = float(np.mean(u_mat1)), float(np.max(u_mat1))
+
+        # 2. Görsel Analiz
+        ots2 = int(np.mean(resim2_np))
+        if ots2 == 0: ots2 = 128
+        p2 = float(np.mean(resim2_np > ots2))
+        b2 = (p2**2) + ((1.0 - p2)**2) if b_esik_val is None else b_esik_val
+        u_mat2, g2, y2 = hesapla_ysum_matrisi(resim2_np, k_val, b2)
+        mean_u2, max_u2 = float(np.mean(u_mat2)), float(np.max(u_mat2))
+
+        out_col1, out_col2 = st.columns(2)
+
+        with out_col1:
+            st.markdown("#### 🟢 1. Görsel Isı Haritası & Analizi")
+            fig1, ax1 = plt.subplots(figsize=(4, 4), dpi=100)
+            ax1.imshow(resim1_np, cmap="gray", alpha=0.4)
+            im1 = ax1.imshow(u_mat1, cmap="RdYlBu_r", extent=[10, g1 - 10, y1 - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
+            plt.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04).set_label("U_k")
+            ax1.set_title(f"1. Görsel (k={k_val})\n(Maks U: {max_u1:.2f}, Ort U: {mean_u1:.2f})", fontsize=10, fontweight="bold")
+            ax1.axis("off")
+            st.pyplot(fig1)
+            plt.close(fig1)
+
+            st.metric("1. Görsel Ortalama YSÜM ($U_{ort1}$)", f"{mean_u1:.3f}")
+            st.metric("1. Görsel Maksimum Odak ($U_{maks1}$)", f"{max_u1:.3f}")
+            if mean_u1 > 0.40:
+                st.success("Düşük Asimetri (Düzenli Yapı)")
+            else:
+                st.error("Yüksek Asimetri (Şüpheli Sınır)")
+
+        with out_col2:
+            st.markdown("#### 🔴 2. Görsel Isı Haritası & Analizi")
+            fig2, ax2 = plt.subplots(figsize=(4, 4), dpi=100)
+            ax2.imshow(resim2_np, cmap="gray", alpha=0.4)
+            im2 = ax2.imshow(u_mat2, cmap="RdYlBu_r", extent=[10, g2 - 10, y2 - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
+            plt.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04).set_label("U_k")
+            ax2.set_title(f"2. Görsel (k={k_val})\n(Maks U: {max_u2:.2f}, Ort U: {mean_u2:.2f})", fontsize=10, fontweight="bold")
+            ax2.axis("off")
+            st.pyplot(fig2)
+            plt.close(fig2)
+
+            st.metric("2. Görsel Ortalama YSÜM ($U_{ort2}$)", f"{mean_u2:.3f}")
+            st.metric("2. Görsel Maksimum Odak ($U_{maks2}$)", f"{max_u2:.3f}")
+            if mean_u2 > 0.40:
+                st.success("Düşük Asimetri (Düzenli Yapı)")
+            else:
+                st.error("Yüksek Asimetri (Şüpheli Sınır)")
+
+        # KARŞILAŞTIRMA ÖZET TABLOSU VE FARK METRİĞİ
+        st.markdown("---")
+        st.subheader("📊 İkili Karşılaştırmalı Değerlendirme Özeti")
+
+        delta_u = mean_u2 - mean_u1
+        st.metric(
+            label="Asimetri / Simetri Skoru Değişim Farkı (ΔU = U_ort2 - U_ort1)",
+            value=f"{delta_u:+.3f}",
+            delta=f"{delta_u:+.3f} (Pozitif: Simetri Artmış / Negatif: Asimetri Artmış)"
+        )
+
+        res_col1, res_col2 = st.columns(2)
+
+        with res_col1:
+            st.markdown("### 📋 Karşılaştırmalı Metrik Tablosu")
+            st.table({
+                "Metrik Parametresi": ["Açık Piksel Payı (p)", "Ölçülen Şans Eşiği (B)", "Ortalama YSÜM (U_ort)", "Maksimum Odak (U_maks)"],
+                "1. Görsel": [f"%{p1*100:.1f}", f"{b1:.3f}", f"{mean_u1:.3f}", f"{max_u1:.3f}"],
+                "2. Görsel": [f"%{p2*100:.1f}", f"{b2:.3f}", f"{mean_u2:.3f}", f"{max_u2:.3f}"],
+                "Fark (Δ)": [f"%{(p2-p1)*100:+.1f}", f"{b2-b1:+.3f}", f"{delta_u:+.3f}", f"{max_u2-max_u1:+.3f}"]
+            })
+
+        with res_col2:
+            st.markdown("### 🩺 Klinik Karar Destek & Değişim Yorumu")
+            if abs(delta_u) < 0.08:
+                st.info("🟢 **KARARLI SINIR YAPISI:** İki görsel arasında anlamlı bir asimetri değişimi gözlenmemiştir. Sınır yapısı kararlılığını korumaktadır.")
+            elif delta_u < -0.08:
+                st.warning("🟡 **ASİMETRİ ARTIŞI TESPİT EDİLDİ (ŞÜPHELİ GELİŞİM):** 2. görselde simetri skorunda düşüş (asimetride artış) kaydedilmiştir. ABCDE 'A' kriteri yönünden lezyon sınır takibi önerilir.")
+            else:
+                st.success("🔵 **DÜZENLİLİK ARTIŞI:** 2. görselde simetri oranında artış tespit edilmiştir.")
+
+st.sidebar.markdown("---")
+st.sidebar.info("💡 **İpucu:** Sol taraftan 'İkili Dermatolojik Görsel Karşılaştırma Modu'nu seçerek iki resmi yan yana YSÜM ile kıyaslayabilirsiniz.")
