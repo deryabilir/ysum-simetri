@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 st.title("🌀 YSÜM - Yerel Simetri Üstünlük Modeli Laboratuvarı")
-st.caption("Penrose Geometrisi, Desen Analizi ve Toplu Görsel İnceleme Platformu")
+st.caption("Penrose Geometrisi, Desen Analizi ve Şans Arındırmalı Simetri Haritalama Platformu")
 
 # ------------------------------------------------------------------------------
 # TEORİ VE BİLİMSEL LİTERATÜR BÖLÜMÜ
@@ -46,7 +46,7 @@ with st.expander("📌 Penrose Geometrisi, Bilimsel Literatür ve Metodolojik Ç
                 n_dots = 10 if ring_r < 0.8 else 20
                 angles_n = np.linspace(0, 2*np.pi, n_dots, endpoint=False)
                 ax_n.scatter(ring_r * np.cos(angles_n), ring_r * np.sin(angles_n), c="#00f2fe", s=15, alpha=0.9)
-            ax_n.scatter([0], [0], c="white", s=30)
+            ax_n.scatter(,, c="white", s=30)
             ax_n.set_title("Shechtman Kırınım Deseni (Model)", fontsize=8, color="white", pad=4)
             ax_n.axis("off")
             st.pyplot(fig_n)
@@ -301,10 +301,12 @@ if "Tekli" in analiz_modu:
             baskin_maks = maks_skorlar[baskin_k]
             st.success(f"🏆 **Analiz Bulgusu:** En yüksek ortalama skora sahip yapı **{baskin_k}-Katlı Simetridir** (Ortalama U: **{baskin_ort:.2f}**, Maks: **{baskin_maks:.2f}**)")
 
-            # Rapor Sekmeleri
+            # DETAYLI ANALİZ VE DEĞERLENDİRME REHBERİ (NE ANLAMA GELİYOR?)
             st.markdown("---")
+            st.subheader("💡 Detaylı Analiz & Sonuçlar Ne Anlama Geliyor?")
+            
             rep_tab1, rep_tab2, rep_tab3 = st.tabs([
-                "📊 Sayısal Özet & Kontrol", "🔍 Odak Koordinatları", "🩺 Kavramsal Değerlendirme"
+                "📊 Sayısal Metrikler & Kontrol", "🔍 Odak Koordinatları", "📖 Sonuçları Okuma Rehberi"
             ])
             neg_ort = 0.0
             if negatif_kontrol:
@@ -317,20 +319,39 @@ if "Tekli" in analiz_modu:
             fark_u = baskin_ort - neg_ort
 
             with rep_tab1:
-                st.markdown(r"* **Baskın Dönel Simetri:** **" + str(baskin_k) + r"-Katlı**" + "\n" +
-                            r"* **Ortalama YSÜM Skoru ($U_{ort}$):** **" + f"{baskin_ort:.3f}" + r"** | **Maksimum Odak Skoru ($U_{maks}$):** **" + f"{baskin_maks:.3f}" + r"**" + "\n" +
-                            r"* **Negatif Kontrol Skoru ($U_{kontrol}$):** **" + f"{neg_ort:.3f}" + r"** (Piksel Shuffling)" + "\n" +
-                            r"* **Göreli Sinyal Farkı ($\Delta U$):** **+" + f"{fark_u:.3f}" + r"** (Sinyal/Gürültü Ayrımı)")
+                st.markdown(f"""
+                ### 📊 Elde Edilen Metrik Verileri
+                * **Baskın Dönel Simetri:** **{baskin_k}-Katlı**
+                * **Ortalama YSÜM Skoru ($U_{{ort}}$):** **{baskin_ort:.3f}**
+                * **Maksimum Odak Skoru ($U_{{maks}}$):** **{baskin_maks:.3f}**
+                * **Negatif Kontrol Skoru ($U_{{kontrol}}$):** **{neg_ort:.3f}** (Piksel Shuffling)
+                * **Göreli Sinyal Farkı ($\Delta U$):** **+{fark_u:.3f}** (Sinyal / Gürültü Ayrımı)
+                """)
             with rep_tab2:
-                st.markdown(f"1. **Birincil Odak:** `(X: {top_coords_dict[baskin_k][0][0]} px, Y: {top_coords_dict[baskin_k][0][1]} px)` — Skor: **{top_coords_dict[baskin_k][0][2]:.2f}**\n2. **İkincil Odak:** `(X: {top_coords_dict[baskin_k][1][0]} px, Y: {top_coords_dict[baskin_k][1][1]} px)` — Skor: **{top_coords_dict[baskin_k][1][2]:.2f}**\n3. **Üçüncül Odak:** `(X: {top_coords_dict[baskin_k][2][0]} px, Y: {top_coords_dict[baskin_k][2][1]} px)` — Skor: **{top_coords_dict[baskin_k][2][2]:.2f}**")
+                st.markdown(f"""
+                ### 🔍 En Yüksek 3 Simetri Odak Noktası ({baskin_k}-Katlı)
+                1. **Birincil Odak:** `(X: {top_coords_dict[baskin_k][0][0]} px, Y: {top_coords_dict[baskin_k][0][1]} px)` — YSÜM Skoru: **{top_coords_dict[baskin_k][0][2]:.2f}**
+                2. **İkincil Odak:** `(X: {top_coords_dict[baskin_k][1][0]} px, Y: {top_coords_dict[baskin_k][1][1]} px)` — YSÜM Skoru: **{top_coords_dict[baskin_k][1][2]:.2f}**
+                3. **Üçüncül Odak:** `(X: {top_coords_dict[baskin_k][2][0]} px, Y: {top_coords_dict[baskin_k][2][1]} px)` — YSÜM Skoru: **{top_coords_dict[baskin_k][2][2]:.2f}**
+                """)
             with rep_tab3:
-                k2_skor = skorlar.get(2, baskin_ort)
-                if k2_skor > 0.45:
-                    st.success("🟢 **ŞEMATİK KAVRAMSAL DEĞERLENDİRME: YÜKSEK İKİ EKSENLİ SİMETRİ**\n\nModel sınırlarında belirgin simetri gözlenmektedir. (Not: Bu sonuç tıbbi bir teşhis değildir.)")
-                elif k2_skor > 0.15:
-                    st.warning("🟡 **ŞEMATİK KAVRAMSAL DEĞERLENDİRME: ORTA DERECE ASİMETRİK SAPMA**\n\nModel sınırlarında kısmi açısal asimetri mevcuttur.")
-                else:
-                    st.error("🔴 **ŞEMATİK KAVRAMSAL DEĞERLENDİRME: YÜKSEK AÇISAL ASİMETRİ**\n\nModel sınırları simetriden belirgin şekilde sapmaktadır.")
+                st.markdown("""
+                ### 📖 Isı Haritası ve Skor Yorumlama Rehberi
+                
+                #### 1. YSÜM Skoru ($U_k$) Değerleri Ne Anlama Gelir?
+                * **$U_k \ge 0.50$ (Mükemmel / Güçlü Simetri):** Görselde şans beklentisinin çok üzerinde, belirgin bir geometrik düzen vardır.
+                * **$0.20 \le U_k < 0.50$ (Kısmi / Orta Simetri):** Görselin belirli bölgelerinde lokal simetri odakları mevcuttur.
+                * **$0.00 \le U_k < 0.20$ (Zayıf Simetri / Şans Seviyesi):** Belirgin dönel simetri yoktur; değer rastgele piksel eşleşmesine yakındır.
+                * **$U_k < 0.00$ (Asimetrik Yapı):** Piksel dizilimi rastgele şansın bile altındadır, asimetrik bir görünüm sunar.
+
+                #### 2. Isı Haritasındaki Renkler Nasıl Okunur?
+                * 🔴 **Kırmızı / Turuncu Alanlar:** YSÜM skorunun en yüksek olduğu **simetri merkez odaklarını** temsil eder.
+                * 🟡 **Sarı / Yeşil Alanlar:** Geçiş bölgeleri ve orta seviye düzenlilik.
+                * 🔵 **Mavi / Koyu Mavi Alanlar:** Düzensiz, asimetrik veya gürültülü alanlar.
+
+                #### 3. Negatif Kontrol ve Fark ($\Delta U$) Neyi Kanıtlar?
+                * Orijinal resimdeki pikseller rastgele karıştırıldığında (shuffling) skor $U \approx 0.00$'a düşüyorsa, görseldeki simetri **tesadüf değil, matematiksel bir tasarımdır**.
+                """)
 
 # ==============================================================================
 # MOD 2: İKİLİ GÖRSEL KARŞILAŞTIRMA MODU
@@ -406,6 +427,15 @@ elif "İkili" in analiz_modu:
 
         delta_u = mean_u2 - mean_u1
         st.metric(label="Skor Değişim Farkı (ΔU = U_ort2 - U_ort1)", value=f"{delta_u:+.3f}")
+
+        st.markdown("---")
+        st.markdown("### 📖 İkili Karşılaştırma Sonuçları Nasıl Yorumlanır?")
+        if abs(delta_u) < 0.08:
+            st.info("🟢 **Kararlı Sınırlı Yapı:** İki görsel arasında anlamlı bir simetri/asimetri değişimi kaydedilmemiştir.")
+        elif delta_u < -0.08:
+            st.warning("🟡 **Asimetri Artışı:** 2. görselde 1. görsele kıyasla simetri skorunda düşüş (asimetride artış) tespit edilmiştir.")
+        else:
+            st.success("🔵 **Simetri Artışı:** 2. görselde 1. görsele kıyasla dönel düzenlilik oranı artmıştır.")
 
 # ==============================================================================
 # MOD 3: TOPLU GÖRSEL ANALİZİ & CSV DIŞA AKTARIMI
@@ -502,3 +532,10 @@ else:
             file_name="ysum_toplu_analiz_raporu.csv",
             mime="text/csv"
         )
+
+        st.markdown("""
+        ### 📖 Toplu Analiz Verileri Nasıl Okunur?
+        * **Ortalama YSÜM (U_ort):** Her görselin tüm yüzeyindeki ortalama dönel düzen düzeyidir.
+        * **Maksimum Odak (U_maks):** Görseldeki en yüksek tekil simetri merkezinin gücüdür.
+        * **Göreli Sinyal Farkı (ΔU):** Gerçek YSÜM skoru ile rastgele gürültü skoru arasındaki net farktır. Pozitif değerler simetrinin tesadüf olmadığını doğrular.
+        """)
