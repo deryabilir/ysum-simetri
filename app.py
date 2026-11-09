@@ -4,6 +4,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
+import pandas as pd
 
 # ==============================================================================
 # STREAMLIT SAYFA DÜZENİ
@@ -14,29 +15,29 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🌀 YSÜM - Yerel Simetri Üstünlük Modeli (Revize Akademik Sürüm)")
-st.caption("Penrose Geometrisi ve Desen Analizinde Şans Arındırmalı Dönel Simetri Haritalama Laboratuvarı")
+st.title("🌀 YSÜM - Yerel Simetri Üstünlük Modeli Laboratuvarı")
+st.caption("Penrose Geometrisi, Desen Analizi ve Toplu Görsel İnceleme Platformu")
 
 # ------------------------------------------------------------------------------
-# DETAYLI BİLGİ VE TEORİ PANELİ (BİLİMSEL LİTERATÜR VE DÜZELTİLMİŞ KRONOLOJİ)
+# TEORİ VE BİLİMSEL LİTERATÜR BÖLÜMÜ
 # ------------------------------------------------------------------------------
-with st.expander("📌 Penrose Geometrisi, Bilimsel Literatür ve Metodolojik Sınırlılıklar", expanded=True):
+with st.expander("📌 Penrose Geometrisi, Bilimsel Literatür ve Metodolojik Çerçeve", expanded=True):
     tab_teori1, tab_teori2, tab_teori3, tab_teori4, tab_teori5 = st.tabs([
         "📐 Penrose & Kuasikristaller",
         "🧮 YSÜM ($U_k$) ve $B$ Doğrulaması",
-        "🌐 Endüstriyel Modelleme",
-        "🩺 Tıbbi Asimetri Paralelliği (Etik Sınır)",
+        "🌐 Endüstriyel Yüzey Analizi",
+        "🩺 Tıbbi Asimetri Paralelliği",
         "🕌 Girih Sanatı & Lu-Steinhardt (2007)"
     ])
 
     with tab_teori1:
-        col_t1, col_t2, col_t3 = st.columns()
+        col_t1, col_t2, col_t3 = st.columns(3)
         with col_t1:
             st.markdown(r"""
-            ### 📐 Penrose Döşemeleri ve Kuasikristal Geometrisi
-            * **Periyodik Olmayan Yapı (Aperiodic Tiling):** Roger Penrose tarafından 1974'te keşfedilen bu yapılar, düzlemi boşluksuz örter ancak kaydırma (öteleme) simetrisine sahip değildir.
+            ### 📐 Penrose Kaplamaları
+            * **Periyodik Olmayan Yapı:** Roger Penrose tarafından 1974'te keşfedilen bu yapılar, düzlemi boşluksuz örter ancak öteleme simetrisine sahip değildir.
             * **Altın Oran ($\Phi \approx 1.618$):** Karo alan oranları Altın Oran'a yakınsar ($p = 1/\Phi \approx 0.618$).
-            * **2011 Nobel Kimya Ödülü İlişkisi:** Dan Shechtman 1982'de kuasikristalleri keşfetmiş ve 2011 Nobel Kimya Ödülü'nü kazanmıştır. Penrose'un matematiksel modeli, doğadaki bu atomik dizilimin teorik çemberini oluşturmuştur.
+            * **2011 Nobel Kimya Ödülü İlişkisi:** Dan Shechtman 1982'de kuasikristalleri keşfetmiş ve 2011 Nobel Ödülü'nü kazanmıştır. Penrose kaplamaları bu fiziksel yapının matematiksel teorisini temsil eder.
             """)
         with col_t2:
             fig_n, ax_n = plt.subplots(figsize=(3, 3), dpi=100)
@@ -45,7 +46,7 @@ with st.expander("📌 Penrose Geometrisi, Bilimsel Literatür ve Metodolojik S�
                 n_dots = 10 if ring_r < 0.8 else 20
                 angles_n = np.linspace(0, 2*np.pi, n_dots, endpoint=False)
                 ax_n.scatter(ring_r * np.cos(angles_n), ring_r * np.sin(angles_n), c="#00f2fe", s=15, alpha=0.9)
-            ax_n.scatter(,, c="white", s=30)
+            ax_n.scatter([0], [0], c="white", s=30)
             ax_n.set_title("Shechtman Kırınım Deseni (Model)", fontsize=8, color="white", pad=4)
             ax_n.axis("off")
             st.pyplot(fig_n)
@@ -62,12 +63,12 @@ with st.expander("📌 Penrose Geometrisi, Bilimsel Literatür ve Metodolojik S�
             plt.close(fig_p)
 
     with tab_teori2:
-        col_m1, col_m2 = st.columns()
+        col_m1, col_m2 = st.columns(2)
         with col_m1:
             st.markdown(r"""
-            ### 🧮 Şans Arındırması ve Doğru Cebirsel $B$ Hesabı
-            * **İkileştirilmiş Eşleşme ($S_k$):** Aynı ikili matris ($I_{bin}$) üzerinde belirlenen merkez etrafında $2\pi/k$ dönüşlerindeki piksel çakışma oranıdır.
-            * **Doğru Penrose Cebirsel Şans Eşiği ($B_{Penrose}$):** Altın oran payı $p = 1/\Phi \approx 0.618$ için:
+            ### 🧮 Şans Arındırması ve Cebirsel $B$ Hesabı
+            * **İkileştirilmiş Eşleşme ($S_k$):** Binarize edilmiş piksel matrisi ($I_{bin}$) üzerinde merkez etrafındaki $2\pi/k$ dönüşlerindeki piksel çakışma oranıdır.
+            * **Penrose Cebirsel Şans Eşiği ($B_{Penrose}$):** Altın oran payı $p = 1/\Phi \approx 0.618$ için:
               $$B = p^2 + (1-p)^2 = (0.618)^2 + (0.382)^2 \approx \mathbf{0.528}$$
             * **Üstünlük Skoru ($U_k$):**
               $$U_k = \frac{S_k - B}{1.0 - B}$$
@@ -87,66 +88,36 @@ with st.expander("📌 Penrose Geometrisi, Bilimsel Literatür ve Metodolojik S�
 
     with tab_teori3:
         st.markdown("""
-        ### 🌐 Endüstriyel Modelleme ve Yüzey Analizi
+        ### 🌐 Yüzey Analizi ve Malzeme Değerlendirmesi
+        * **İnce Film Araştırmaları:** Kuasikristal kaplamaların yüzey homojenliği ve simetri sapmalarının sayısal incelenmesi.
+        * **Optik Izgaralar:** Fotonik yapılarda açısal düzensizliklerin simülasyonu.
         """)
-        col_app1, col_app2, col_app3 = st.columns(3)
-        with col_app1:
-            st.success("🔬 **1. Malzeme Araştırmaları**\n\nKuasikristal yapılı ince filmlerin yüzey düzenliliğinin ve anizotropisinin deneysel olarak incelenmesi.")
-        with col_app2:
-            st.info("⚡ **2. Optik & Fotonik Yapılar**\n\nFotonik kristal ızgaralarında açısal simetri sapmalarının simülasyonu.")
-        with col_app3:
-            st.warning("🏭 **3. Yüzey Kalite Kontrol Modeli**\n\nÜretim yüzeylerinde simetri bozulmalarının sayısal skorlama eşikleriyle bağımsız olarak takip edilmesi.")
 
     with tab_teori4:
-        col_med1, col_med2 = st.columns()
-        with col_med1:
-            st.markdown(r"""
-            ### 🩺 Tıbbi Asimetri Paralelliği ve Metodolojik Etik
-            * **Kavramsal Köprü (ABCDE "A" Kriteri):** Dermatolojide lezyon sınırlarının asimetrisi önem taşır. YSÜM modelinin simetriden sapmayı ölçme mantığı bu alanla akademik bir paralellik kurar.
-            * **Metodolojik Sınırlılıklar:** Bu yazılım otomatik lezyon segmentasyonu yapmamaktadır; merkez noktaları sabit ızgaradan alınır. Eşik değerleri kavramsal göstergedir.
-            * **Kesin Etik Beyan:** Yazılım bir tıbbi teşhis aracı DEĞİLDİR ve klinik testten geçmemiştir; yalnızca matematiksel modelleme sunar.
-            """)
-        with col_med2:
-            fig_m, ax_m = plt.subplots(figsize=(3, 3), dpi=100)
-            ax_m.set_facecolor("#f8f9fa")
-            theta = np.linspace(0, 2*np.pi, 200)
-            r_sym = 0.8 + 0.05 * np.cos(5*theta)
-            r_asym = 0.8 + 0.25 * np.sin(3*theta) + 0.1 * np.cos(7*theta)
-            ax_m.plot(r_sym * np.cos(theta), r_sym * np.sin(theta), "g--", label="Simetrik Model", lw=1.5)
-            ax_m.plot(r_asym * np.cos(theta), r_asym * np.sin(theta), "r-", label="Asimetrik Model", lw=1.8)
-            ax_m.set_title("Geometrik Asimetri Şeması", fontsize=8, color="darkred", pad=4)
-            ax_m.legend(fontsize=7, loc="lower right")
-            ax_m.axis("off")
-            st.pyplot(fig_m)
-            plt.close(fig_m)
+        st.markdown(r"""
+        ### 🩺 Tıbbi Asimetri Paralelliği (Akademik Etik Sınır)
+        * **ABCDE "A" Kriteri Paralelliği:** Dermatolojide lezyon sınırlarının asimetrisi takip edilir. YSÜM modelinin simetriden sapmayı ölçme mantığı bu alanla akademik bir kavramsal köprü kurar.
+        * **Sınırlılıklar & Etik:** Bu yazılım lezyon segmentasyonu yapmaz, sabit ızgara kullanır ve tıbbi bir teşhis aracı DEĞİLDİR.
+        """)
 
     with tab_teori5:
-        col_g1, col_g2 = st.columns()
-        with col_g1:
-            st.markdown(r"""
-            ### 🕌 Girih Sanatı & Lu-Steinhardt (2007) Bulguları
-            * **Akademik Literatür:** Peter J. Lu ve Paul J. Steinhardt (2007, *Science*), 15. yüzyıl İslam mimarisindeki (ör. İsfahan Darb-ı İmam) Girih karolarının periyodik olmayan Penrose benzeri geometrik düzenler içerdiğini göstermiştir.
-            * **Restorasyon Modeli:** Tarihi yapılarda eksik çini motiflerinin açısal simetri merkezlerinin sayısal olarak haritalanması.
-            """)
-        with col_g2:
-            fig_g, ax_g = plt.subplots(figsize=(3, 3), dpi=100)
-            angles_g = np.linspace(0, 2*np.pi, 21)
-            r_girih = np.where(np.arange(21) % 2 == 0, 1.0, 0.45)
-            ax_g.plot(r_girih * np.cos(angles_g), r_girih * np.sin(angles_g), color="#008080", lw=2)
-            ax_g.fill(r_girih * np.cos(angles_g), r_girih * np.sin(angles_g), color="#008080", alpha=0.3)
-            ax_g.set_title("10-Katlı Girih Çizim Modeli", fontsize=8, color="darkgreen", pad=4)
-            ax_g.axis("off")
-            st.pyplot(fig_g)
-            plt.close(fig_g)
+        st.markdown(r"""
+        ### 🕌 Girih Sanatı & Lu-Steinhardt (2007)
+        * Peter J. Lu ve Paul J. Steinhardt (2007, *Science*), 15. yüzyıl İslam mimarisindeki Girih karolarının Penrose benzeri periyodik olmayan geometrik düzenler içerdiğini göstermiştir.
+        """)
 
 # ------------------------------------------------------------------------------
-# YAN MENÜ (AYARLAR)
+# YAN MENÜ (AYARLAR VE ÇALIŞMA MODLARI)
 # ------------------------------------------------------------------------------
-st.sidebar.header("⚙️ Analiz Ayarları")
+st.sidebar.header("⚙️ Çalışma Modu ve Ayarlar")
 
 analiz_modu = st.sidebar.radio(
     "📌 Çalışma Modu Seçin:",
-    ["🖼️ Tekli Görsel Analizi", "🩺 İkili Dermatolojik Karşılaştırma Modu"]
+    [
+        "🖼️ Tekli Görsel Analizi",
+        "🩺 İkili Dermatolojik Karşılaştırma Modu",
+        "📊 Toplu Görsel Analizi & CSV Dışa Aktarımı"
+    ]
 )
 
 k_secim = st.sidebar.selectbox(
@@ -166,13 +137,13 @@ elif "Cebirsel" in b_modu:
 else:
     b_esik_val = None
 
-negatif_kontrol = st.sidebar.checkbox("Negatif Kontrol (Tekrarlanabilir Piksel Karıştırma)", value=True)
+negatif_kontrol = st.sidebar.checkbox("Negatif Kontrol (Tekrarlanabilir Seed=42 Shuffling)", value=True)
 
 # ------------------------------------------------------------------------------
-# YARDIMCI FONKSİYONLAR (METODOLOJİK OLARAK DÜZELTİLMİŞ)
+# YARDIMCI FONKSİYONLAR
 # ------------------------------------------------------------------------------
 def ornek_desen_olustur(tip):
-    np.random.seed(42) # Tekrarlanabilirlik için sabit seed
+    np.random.seed(42)
     w, h = 200, 200
     img_pil = Image.new("L", (w, h), 0)
     draw = ImageDraw.Draw(img_pil)
@@ -209,12 +180,10 @@ def ornek_desen_olustur(tip):
         
     return np.array(img_pil)
 
-# Birebir Aynı İkili Matris Üzerinden Hesaplama Yapan YSÜM Motoru
 def hesapla_ysum_matrisi(resim_np, k, b_degeri, ots_thresh, yaricaplar=None, ornek_sayisi=36, adim=8):
     if yaricaplar is None:
-        yaricaplar = 
+        yaricaplar = [8, 16, 24]
     
-    # METODOLOJİK DÜZELTME: Görsel önce ikileştirilir (binarize edilir)
     binary_np = (resim_np > ots_thresh).astype(np.uint8)
     yukseklik, genislik = binary_np.shape
     
@@ -236,7 +205,6 @@ def hesapla_ysum_matrisi(resim_np, k, b_degeri, ots_thresh, yaricaplar=None, orn
                     dpy = int(round(cy + r * np.sin(aci + donme_acisi)))
                     
                     if (0 <= px < genislik and 0 <= py < yukseklik and 0 <= dpx < genislik and 0 <= dpy < yukseklik):
-                        # Birebir aynı ikili matris karşılaştırması
                         if binary_np[py, px] == binary_np[dpy, dpx]:
                             eslesen_nokta += 1
             if toplam_nokta > 0:
@@ -282,7 +250,6 @@ if "Tekli" in analiz_modu:
             ots_thresh = int(np.mean(resim_np))
             if ots_thresh == 0: ots_thresh = 128
             
-            # Aynı ikili matris üzerinden p hesabı
             binary_np = (resim_np > ots_thresh).astype(np.uint8)
             p = float(np.mean(binary_np))
             b_kullanilan = (p**2) + ((1.0 - p)**2) if b_esik_val is None else b_esik_val
@@ -291,17 +258,16 @@ if "Tekli" in analiz_modu:
             m_col1.metric("İkileştirme Eşiği", f"{ots_thresh}")
             m_col2.metric("Piksel Oranı (p)", f"%{p*100:.1f}")
             m_col3.metric("Hesaplanan B Eşiği", f"{b_kullanilan:.3f}")
-            st.info(f"💡 Analizde kullanılan B şans eşiği: **{b_kullanilan:.3f}**")
 
         if st.button("🚀 YSÜM Analizini Başlat", type="primary"):
             st.markdown("---")
             st.subheader("🖼️ Görsel Tabanlı Dönel Simetri Isı Haritası Analizi")
 
-            if "2" in k_secim: k_listesi = 
-            elif "5" in k_secim: k_listesi = 
-            elif "6" in k_secim: k_listesi = 
-            elif "8" in k_secim: k_listesi = 
-            else: k_listesi = 
+            if "2" in k_secim: k_listesi = [2]
+            elif "5" in k_secim: k_listesi = [5]
+            elif "6" in k_secim: k_listesi = [6]
+            elif "8" in k_secim: k_listesi = [8]
+            else: k_listesi = [5, 6, 8]
 
             cols = st.columns(len(k_listesi))
             skorlar, maks_skorlar, top_coords_dict = {}, {}, {}
@@ -337,12 +303,12 @@ if "Tekli" in analiz_modu:
 
             # Rapor Sekmeleri
             st.markdown("---")
-            rep_tab1, rep_tab2, rep_tab3, rep_tab4 = st.tabs([
-                "📊 Sayısal Özet & Kontrol", "🔍 Odak Koordinatları", "🩺 Kavramsal Dermatolojik Model", "🏭 Yüzey Kalite Modeli"
+            rep_tab1, rep_tab2, rep_tab3 = st.tabs([
+                "📊 Sayısal Özet & Kontrol", "🔍 Odak Koordinatları", "🩺 Kavramsal Değerlendirme"
             ])
             neg_ort = 0.0
             if negatif_kontrol:
-                np.random.seed(42) # Tekrarlanabilir seed
+                np.random.seed(42)
                 shuffled_test = resim_np.copy().flatten()
                 np.random.shuffle(shuffled_test)
                 u_mat_test, _, _ = hesapla_ysum_matrisi(shuffled_test.reshape(resim_np.shape), baskin_k, b_kullanilan, ots_thresh)
@@ -351,29 +317,27 @@ if "Tekli" in analiz_modu:
             fark_u = baskin_ort - neg_ort
 
             with rep_tab1:
-                st.markdown(f"* **Baskın Dönel Simetri:** **{baskin_k}-Katlı**\n* **Ortalama YSÜM Skoru ($U_{{ort}}$):** **{baskin_ort:.3f}** | **Maksimum Odak Skoru ($U_{{maks}}$):** **{baskin_maks:.3f}**\n* **Negatif Kontrol Skoru ($U_{{kontrol}}$):** **{neg_ort:.3f}** (Piksel Shuffling)\n* **Göreli Sinyal Farkı ($\Delta U$):** **+{fark_u:.3f}** (Sinyal/Gürültü Ayrımı)")
+                st.markdown(r"* **Baskın Dönel Simetri:** **" + str(baskin_k) + r"-Katlı**" + "\n" +
+                            r"* **Ortalama YSÜM Skoru ($U_{ort}$):** **" + f"{baskin_ort:.3f}" + r"** | **Maksimum Odak Skoru ($U_{maks}$):** **" + f"{baskin_maks:.3f}" + r"**" + "\n" +
+                            r"* **Negatif Kontrol Skoru ($U_{kontrol}$):** **" + f"{neg_ort:.3f}" + r"** (Piksel Shuffling)" + "\n" +
+                            r"* **Göreli Sinyal Farkı ($\Delta U$):** **+" + f"{fark_u:.3f}" + r"** (Sinyal/Gürültü Ayrımı)")
             with rep_tab2:
-                st.markdown(f"1. **Birincil Odak:** `(X: {top_coords_dict[baskin_k]} px, Y: {top_coords_dict[baskin_k]} px)` — Skor: **{top_coords_dict[baskin_k]:.2f}**\n2. **İkincil Odak:** `(X: {top_coords_dict[baskin_k]} px, Y: {top_coords_dict[baskin_k]} px)` — Skor: **{top_coords_dict[baskin_k]:.2f}**\n3. **Üçüncül Odak:** `(X: {top_coords_dict[baskin_k]} px, Y: {top_coords_dict[baskin_k]} px)` — Skor: **{top_coords_dict[baskin_k]:.2f}**")
+                st.markdown(f"1. **Birincil Odak:** `(X: {top_coords_dict[baskin_k][0][0]} px, Y: {top_coords_dict[baskin_k][0][1]} px)` — Skor: **{top_coords_dict[baskin_k][0][2]:.2f}**\n2. **İkincil Odak:** `(X: {top_coords_dict[baskin_k][1][0]} px, Y: {top_coords_dict[baskin_k][1][1]} px)` — Skor: **{top_coords_dict[baskin_k][1][2]:.2f}**\n3. **Üçüncül Odak:** `(X: {top_coords_dict[baskin_k][2][0]} px, Y: {top_coords_dict[baskin_k][2][1]} px)` — Skor: **{top_coords_dict[baskin_k][2][2]:.2f}**")
             with rep_tab3:
                 k2_skor = skorlar.get(2, baskin_ort)
                 if k2_skor > 0.45:
-                    st.success("🟢 **ŞEMATİK KAVRAMSAL DEĞERLENDİRME: YÜKSEK İKİ EKSENLİ SİMETRİ**\n\nModel sınırlarında belirgin simetri gözlenmektedir. (Not: Bu sonuç bir tıbbi teşhis değildir.)")
+                    st.success("🟢 **ŞEMATİK KAVRAMSAL DEĞERLENDİRME: YÜKSEK İKİ EKSENLİ SİMETRİ**\n\nModel sınırlarında belirgin simetri gözlenmektedir. (Not: Bu sonuç tıbbi bir teşhis değildir.)")
                 elif k2_skor > 0.15:
                     st.warning("🟡 **ŞEMATİK KAVRAMSAL DEĞERLENDİRME: ORTA DERECE ASİMETRİK SAPMA**\n\nModel sınırlarında kısmi açısal asimetri mevcuttur.")
                 else:
                     st.error("🔴 **ŞEMATİK KAVRAMSAL DEĞERLENDİRME: YÜKSEK AÇISAL ASİMETRİ**\n\nModel sınırları simetriden belirgin şekilde sapmaktadır.")
-            with rep_tab4:
-                if baskin_ort > 0.40: st.success("🟢 **YÜZEY KALİTE MODELİ: BELİRGİN DÖNEL SİMETRİ ($U > 0.40$)**")
-                elif baskin_ort > 0.15: st.warning("🟡 **YÜZEY KALİTE MODELİ: KISMİ DÜZEN ($0.15 < U \\le 0.40$)**")
-                else: st.error("🔴 **YÜZEY KALİTE MODELİ: DÜZENSİZ / ASİMETRİK YÜZEY ($U \\le 0.15$)**")
 
 # ==============================================================================
-# MOD 2: İKİLİ DERMATOLOJİK GÖRSEL KARŞILAŞTIRMA MODU
+# MOD 2: İKİLİ GÖRSEL KARŞILAŞTIRMA MODU
 # ==============================================================================
-else:
+elif "İkili" in analiz_modu:
     st.markdown("---")
-    st.subheader("🩺 İkili Dermatolojik Görsel Karşılaştırma Paneli (Kavramsal Model)")
-    st.caption("İki ayrı görselin ikili matris seviyesinde YSÜM asimetri değişimini karşılaştırın.")
+    st.subheader("🩺 İkili Görsel Karşılaştırma Paneli (Kavramsal Model)")
 
     col_cmp1, col_cmp2 = st.columns(2)
 
@@ -397,112 +361,144 @@ else:
             "🎲 Sentetik Model 5: Rastgele Gürültü"
         ], index=0, key="sel2")
 
-    resim1_np, resim2_np = None, None
-
-    if up_file1 is not None:
-        img1 = Image.open(up_file1).convert("L")
-        img1.thumbnail((220, 220))
-        resim1_np = np.array(img1)
-    else:
-        resim1_np = ornek_desen_olustur(sel_ornek1)
-
-    if up_file2 is not None:
-        img2 = Image.open(up_file2).convert("L")
-        img2.thumbnail((220, 220))
-        resim2_np = np.array(img2)
-    else:
-        resim2_np = ornek_desen_olustur(sel_ornek2)
+    resim1_np = np.array(Image.open(up_file1).convert("L").resize((200, 200))) if up_file1 is not None else ornek_desen_olustur(sel_ornek1)
+    resim2_np = np.array(Image.open(up_file2).convert("L").resize((200, 200))) if up_file2 is not None else ornek_desen_olustur(sel_ornek2)
 
     col_v1, col_v2 = st.columns(2)
-    with col_v1:
-        st.image(resim1_np, caption="1. Görsel Matrisi", width=180, clamp=True)
-    with col_v2:
-        st.image(resim2_np, caption="2. Görsel Matrisi", width=180, clamp=True)
+    with col_v1: st.image(resim1_np, caption="1. Görsel Matrisi", width=180, clamp=True)
+    with col_v2: st.image(resim2_np, caption="2. Görsel Matrisi", width=180, clamp=True)
 
     if st.button("🚀 İkili Karşılaştırma Analizini Başlat", type="primary"):
-        st.markdown("---")
-        st.subheader("🔍 Karşılaştırmalı YSÜM Isı Haritası Analizi")
-
         k_val = 2 if "2" in k_secim else (5 if "5" in k_secim else (6 if "6" in k_secim else 8))
 
-        # 1. Görsel Analiz
-        ots1 = int(np.mean(resim1_np))
-        if ots1 == 0: ots1 = 128
-        bin1 = (resim1_np > ots1).astype(np.uint8)
-        p1 = float(np.mean(bin1))
+        ots1 = int(np.mean(resim1_np)) or 128
+        p1 = float(np.mean(resim1_np > ots1))
         b1 = (p1**2) + ((1.0 - p1)**2) if b_esik_val is None else b_esik_val
         u_mat1, g1, y1 = hesapla_ysum_matrisi(resim1_np, k_val, b1, ots1)
         mean_u1, max_u1 = float(np.mean(u_mat1)), float(np.max(u_mat1))
 
-        # 2. Görsel Analiz
-        ots2 = int(np.mean(resim2_np))
-        if ots2 == 0: ots2 = 128
-        bin2 = (resim2_np > ots2).astype(np.uint8)
-        p2 = float(np.mean(bin2))
+        ots2 = int(np.mean(resim2_np)) or 128
+        p2 = float(np.mean(resim2_np > ots2))
         b2 = (p2**2) + ((1.0 - p2)**2) if b_esik_val is None else b_esik_val
         u_mat2, g2, y2 = hesapla_ysum_matrisi(resim2_np, k_val, b2, ots2)
         mean_u2, max_u2 = float(np.mean(u_mat2)), float(np.max(u_mat2))
 
         out_col1, out_col2 = st.columns(2)
-
         with out_col1:
-            st.markdown("#### 🟢 1. Görsel Isı Haritası")
             fig1, ax1 = plt.subplots(figsize=(4, 4), dpi=100)
             ax1.imshow(resim1_np, cmap="gray", alpha=0.4)
             im1 = ax1.imshow(u_mat1, cmap="RdYlBu_r", extent=[10, g1 - 10, y1 - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
-            plt.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04).set_label("U_k")
-            ax1.set_title(f"1. Görsel (k={k_val})\n(Maks={max_u1:.2f}, Ort={mean_u1:.2f})", fontsize=10, fontweight="bold")
+            plt.colorbar(im1, ax=ax1, fraction=0.046, pad=0.04)
+            ax1.set_title(f"1. Görsel (Ort U: {mean_u1:.2f})", fontsize=10, fontweight="bold")
             ax1.axis("off")
             st.pyplot(fig1)
             plt.close(fig1)
 
-            st.metric("1. Görsel Ortalama YSÜM", f"{mean_u1:.3f}")
-            st.metric("1. Görsel Maksimum Odak", f"{max_u1:.3f}")
-
         with out_col2:
-            st.markdown("#### 🔴 2. Görsel Isı Haritası")
             fig2, ax2 = plt.subplots(figsize=(4, 4), dpi=100)
             ax2.imshow(resim2_np, cmap="gray", alpha=0.4)
             im2 = ax2.imshow(u_mat2, cmap="RdYlBu_r", extent=[10, g2 - 10, y2 - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
-            plt.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04).set_label("U_k")
-            ax2.set_title(f"2. Görsel (k={k_val})\n(Maks={max_u2:.2f}, Ort={mean_u2:.2f})", fontsize=10, fontweight="bold")
+            plt.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04)
+            ax2.set_title(f"2. Görsel (Ort U: {mean_u2:.2f})", fontsize=10, fontweight="bold")
             ax2.axis("off")
             st.pyplot(fig2)
             plt.close(fig2)
 
-            st.metric("2. Görsel Ortalama YSÜM", f"{mean_u2:.3f}")
-            st.metric("2. Görsel Maksimum Odak", f"{max_u2:.3f}")
-
-        # KARŞILAŞTIRMA ÖZET TABLOSU
-        st.markdown("---")
-        st.subheader("📊 Metrik Karşılaştırma Özeti")
-
         delta_u = mean_u2 - mean_u1
-        st.metric(
-            label="Skor Değişim Farkı (ΔU = U_ort2 - U_ort1)",
-            value=f"{delta_u:+.3f}",
-            delta=f"{delta_u:+.3f} (Pozitif: Simetri Artışı / Negatif: Asimetri Artışı)"
-        )
+        st.metric(label="Skor Değişim Farkı (ΔU = U_ort2 - U_ort1)", value=f"{delta_u:+.3f}")
 
-        res_col1, res_col2 = st.columns(2)
+# ==============================================================================
+# MOD 3: TOPLU GÖRSEL ANALİZİ & CSV DIŞA AKTARIMI
+# ==============================================================================
+else:
+    st.markdown("---")
+    st.subheader("📊 Toplu Görsel Analizi & İstatistiksel Raporlama Paneli")
+    st.caption("Birden fazla görseli tek seferde analiz ederek YSÜM metriklerini çıkarın ve CSV veriseti olarak indirin.")
 
-        with res_col1:
-            st.markdown("### 📋 Karşılaştırmalı Metrik Tablosu")
-            st.table({
-                "Parametre": ["Piksel Oranı (p)", "Hesaplanan Şans Eşiği (B)", "Ortalama YSÜM (U_ort)", "Maksimum Odak (U_maks)"],
-                "1. Görsel": [f"%{p1*100:.1f}", f"{b1:.3f}", f"{mean_u1:.3f}", f"{max_u1:.3f}"],
-                "2. Görsel": [f"%{p2*100:.1f}", f"{b2:.3f}", f"{mean_u2:.3f}", f"{max_u2:.3f}"],
-                "Fark (Δ)": [f"%{(p2-p1)*100:+.1f}", f"{b2-b1:+.3f}", f"{delta_u:+.3f}", f"{max_u2-max_u1:+.3f}"]
+    uploaded_files = st.file_uploader("📂 Çoklu Görsel Yükleyin (Birden fazla seçebilirsiniz):", type=["png", "jpg", "jpeg", "webp"], accept_multiple_files=True)
+    
+    k_val_batch = 2 if "2" in k_secim else (5 if "5" in k_secim else (6 if "6" in k_secim else 8))
+
+    if st.button("🚀 Toplu Analizi Başlat", type="primary"):
+        gorsel_listesi = []
+
+        if uploaded_files and len(uploaded_files) > 0:
+            for f in uploaded_files:
+                img = Image.open(f).convert("L").resize((200, 200))
+                gorsel_listesi.append((f.name, np.array(img)))
+        else:
+            st.info("💡 Herhangi bir dosya yüklenmediği için 4'lü Sentetik Test Seti analiz ediliyor...")
+            test_isimleri = [
+                "Sentetik Düzgün Model",
+                "Sentetik Düzensiz Model",
+                "Sentetik 5-Katlı Yıldız",
+                "Sentetik Rastgele Gürültü"
+            ]
+            for t in test_isimleri:
+                gorsel_listesi.append((t, ornek_desen_olustur(t)))
+
+        sonuclar = []
+        progress_bar = st.progress(0)
+
+        for index, (isim, res_np) in enumerate(gorsel_listesi):
+            ots = int(np.mean(res_np)) or 128
+            binary_np = (res_np > ots).astype(np.uint8)
+            p = float(np.mean(binary_np))
+            b_val = (p**2) + ((1.0 - p)**2) if b_esik_val is None else b_esik_val
+
+            u_mat, _, _ = hesapla_ysum_matrisi(res_np, k_val_batch, b_val, ots)
+            mean_u = float(np.mean(u_mat))
+            max_u = float(np.max(u_mat))
+
+            # Negatif kontrol (Seed=42)
+            np.random.seed(42)
+            shuffled_np = res_np.copy().flatten()
+            np.random.shuffle(shuffled_np)
+            u_mat_neg, _, _ = hesapla_ysum_matrisi(shuffled_np.reshape(res_np.shape), k_val_batch, b_val, ots)
+            neg_u = float(np.mean(u_mat_neg))
+
+            delta_u = mean_u - neg_u
+
+            sonuclar.append({
+                "Görsel Adı / Tanımı": isim,
+                "İkileştirme Eşiği": ots,
+                "Piksel Oranı (p)": round(p, 4),
+                "Şans Eşiği (B)": round(b_val, 4),
+                "Ortalama YSÜM (U_ort)": round(mean_u, 4),
+                "Maksimum Odak (U_maks)": round(max_u, 4),
+                "Rastgele Kontrol (U_neg)": round(neg_u, 4),
+                "Göreli Sinyal Farkı (ΔU)": round(delta_u, 4)
             })
 
-        with res_col2:
-            st.markdown("### 💡 Göreli Değişim Analizi")
-            if abs(delta_u) < 0.08:
-                st.info("🟢 **KARARLI GEOMETRİK YAPI:** Görseller arasında belirgin bir simetri/asimetri kayması gözlenmemiştir.")
-            elif delta_u < -0.08:
-                st.warning("🟡 **ASİMETRİ ARTIŞI TESPİT EDİLDİ:** 2. görselde 1. görsele kıyasla simetri skorunda düşüş (açısal asimetride artış) kaydedilmiştir.")
-            else:
-                st.success("🔵 **DÜZENLİLİK ARTIŞI:** 2. görselde 1. görsele kıyasla simetri skoru artmıştır.")
+            progress_bar.progress((index + 1) / len(gorsel_listesi))
 
-st.sidebar.markdown("---")
-st.sidebar.info("💡 **Bilimsel Not:** Bu laboratuvar yazılımı akademik simülasyon amaçlıdır; tıbbi teşhis veya fabrika otomasyon cihazı değildir.")
+        df_sonuc = pd.DataFrame(sonuclar)
+
+        st.markdown("### 📋 Toplu Analiz Sonuç Tablosu")
+        st.dataframe(df_sonuc, use_container_width=True)
+
+        # Karşılaştırmalı Çubuk Grafik
+        st.markdown("### 📈 Görsel Bazlı Skorsal Karşılaştırma Grafiği")
+        fig_bar, ax_bar = plt.subplots(figsize=(8, 4), dpi=100)
+        x_indices = np.arange(len(df_sonuc))
+        bar_width = 0.35
+
+        ax_bar.bar(x_indices - bar_width/2, df_sonuc["Ortalama YSÜM (U_ort)"], bar_width, label="Gerçek YSÜM Skoru", color="#00f2fe")
+        ax_bar.bar(x_indices + bar_width/2, df_sonuc["Rastgele Kontrol (U_neg)"], bar_width, label="Shuffled Kontrol (Gürültü)", color="#ff007f")
+
+        ax_bar.set_ylabel("Skor Değeri", fontsize=9)
+        ax_bar.set_xticks(x_indices)
+        ax_bar.set_xticklabels(df_sonuc["Görsel Adı / Tanımı"], rotation=15, ha="right", fontsize=8)
+        ax_bar.legend(fontsize=8)
+        ax_bar.grid(True, alpha=0.3)
+        st.pyplot(fig_bar)
+        plt.close(fig_bar)
+
+        # CSV İndirme Butonu
+        csv_data = df_sonuc.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 Toplu Analiz Raporunu CSV Olarak İndir",
+            data=csv_data,
+            file_name="ysum_toplu_analiz_raporu.csv",
+            mime="text/csv"
+        )
