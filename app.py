@@ -46,7 +46,7 @@ with st.expander("📌 Penrose Geometrisi, Bilimsel Literatür ve Metodolojik Ç
                 n_dots = 10 if ring_r < 0.8 else 20
                 angles_n = np.linspace(0, 2*np.pi, n_dots, endpoint=False)
                 ax_n.scatter(ring_r * np.cos(angles_n), ring_r * np.sin(angles_n), c="#00f2fe", s=15, alpha=0.9)
-            ax_n.scatter(,, c="white", s=30)
+            ax_n.scatter(0, 0, c="white", s=30)
             ax_n.set_title("Shechtman Kırınım Deseni (Model)", fontsize=8, color="white", pad=4)
             ax_n.axis("off")
             st.pyplot(fig_n)
@@ -267,7 +267,7 @@ if "Tekli" in analiz_modu:
             elif "5" in k_secim: k_listesi = [5]
             elif "6" in k_secim: k_listesi = [6]
             elif "8" in k_secim: k_listesi = [8]
-            else: k_listesi = [5, 6, 8]
+            else: k_listesi = [2, 5, 6, 8]
 
             cols = st.columns(len(k_listesi))
             skorlar, maks_skorlar, top_coords_dict = {}, {}, {}
@@ -301,7 +301,7 @@ if "Tekli" in analiz_modu:
             baskin_maks = maks_skorlar[baskin_k]
             st.success(f"🏆 **Analiz Bulgusu:** En yüksek ortalama skora sahip yapı **{baskin_k}-Katlı Simetridir** (Ortalama U: **{baskin_ort:.2f}**, Maks: **{baskin_maks:.2f}**)")
 
-            # DETAYLI ANALİZ VE DEĞERLENDİRME REHBERİ (NE ANLAMA GELİYOR?)
+            # DETAYLI ANALİZ VE DEĞERLENDİRME REHBERİ
             st.markdown("---")
             st.subheader("💡 Detaylı Analiz & Sonuçlar Ne Anlama Geliyor?")
             
@@ -335,7 +335,7 @@ if "Tekli" in analiz_modu:
                 3. **Üçüncül Odak:** `(X: {top_coords_dict[baskin_k][2][0]} px, Y: {top_coords_dict[baskin_k][2][1]} px)` — YSÜM Skoru: **{top_coords_dict[baskin_k][2][2]:.2f}**
                 """)
             with rep_tab3:
-                st.markdown("""
+                st.markdown(r"""
                 ### 📖 Isı Haritası ve Skor Yorumlama Rehberi
                 
                 #### 1. YSÜM Skoru ($U_k$) Değerleri Ne Anlama Gelir?
