@@ -137,6 +137,7 @@ elif "Cebirsel" in b_modu:
 else:
     b_esik_val = None
 
+roi_filtre = st.sidebar.checkbox("🎯 Nesne / Maske Odaklı Tarama (Arka Planı Muaf Tut)", value=True)
 negatif_kontrol = st.sidebar.checkbox("Negatif Kontrol (Tekrarlanabilir Seed=42 Shuffling)", value=True)
 
 # ------------------------------------------------------------------------------
@@ -180,9 +181,9 @@ def ornek_desen_olustur(tip):
         
     return np.array(img_pil)
 
-def hesapla_ysum_matrisi(resim_np, k, b_degeri, ots_thresh, yaricaplar=None, ornek_sayisi=36, adim=8):
+def hesapla_ysum_matrisi(resim_np, k, b_degeri, ots_thresh, yaricaplar=None, ornek_sayisi=36, adim=8, maske_odakli=True):
     if yaricaplar is None:
-        yaricaplar = [8, 16, 24]
+        yaricaplar = [8, 16, 24, 32]
     
     binary_np = (resim_np > ots_thresh).astype(np.uint8)
     yukseklik, genislik = binary_np.shape
@@ -194,19 +195,24 @@ def hesapla_ysum_matrisi(resim_np, k, b_degeri, ots_thresh, yaricaplar=None, orn
 
     for i, cy in enumerate(y_grid):
         for j, cx in enumerate(x_grid):
+            if maske_odakli and binary_np[cy, cx] == 0:
+                u_matrisi[i, j] = 0.0
+                continue
+
             toplam_nokta, eslesen_nokta = 0, 0
             for r in yaricaplar:
                 acilar = np.linspace(0, 2 * np.pi, ornek_sayisi, endpoint=False)
                 for aci in acilar:
-                    toplam_nokta += 1
                     px = int(round(cx + r * np.cos(aci)))
                     py = int(round(cy + r * np.sin(aci)))
                     dpx = int(round(cx + r * np.cos(aci + donme_acisi)))
                     dpy = int(round(cy + r * np.sin(aci + donme_acisi)))
                     
                     if (0 <= px < genislik and 0 <= py < yukseklik and 0 <= dpx < genislik and 0 <= dpy < yukseklik):
-                        if binary_np[py, px] == binary_np[dpy, dpx]:
-                            eslesen_nokta += 1
+                        if not maske_odakli or (binary_np[py, px] == 1 or binary_np[dpy, dpx] == 1):
+                            toplam_nokta += 1
+                            if binary_np[py, px] == binary_np[dpy, dpx]:
+                                eslesen_nokta += 1
             if toplam_nokta > 0:
                 sk = eslesen_nokta / toplam_nokta
                 u_matrisi[i, j] = (sk - b_degeri) / (1.0 - b_degeri) if b_degeri < 1.0 else 0.0
@@ -267,16 +273,19 @@ if "Tekli" in analiz_modu:
             elif "5" in k_secim: k_listesi = [5]
             elif "6" in k_secim: k_listesi = [6]
             elif "8" in k_secim: k_listesi = [8]
-            else: k_listesi = [2, 5, 6, 8]
+            else: k_listesi = [5, 6, 8]
 
             cols = st.columns(len(k_listesi))
             skorlar, maks_skorlar, top_coords_dict = {}, {}, {}
 
             for idx, k in enumerate(k_listesi):
                 with cols[idx]:
-                    u_mat, g, y = hesapla_ysum_matrisi(resim_np, k, b_kullanilan, ots_thresh)
+                    u_mat, g, y = hesapla_ysum_matrisi(resim_np, k, b_kullanilan, ots_thresh, maske_odakli=roi_filtre)
                     max_u = float(np.max(u_mat))
-                    mean_u = float(np.mean(u_mat))
+                    
+                    non_zero = u_mat[u_mat > 0.0]
+                    mean_u = float(np.mean(non_zero)) if len(non_zero) > 0 else float(np.mean(u_mat))
+                    
                     skorlar[k] = mean_u
                     maks_skorlar[k] = max_u
 
@@ -291,7 +300,7 @@ if "Tekli" in analiz_modu:
                     ax.imshow(resim_np, cmap="gray", alpha=0.4)
                     im = ax.imshow(u_mat, cmap="RdYlBu_r", extent=[10, g - 10, y - 10, 10], alpha=0.7, vmin=-0.5, vmax=1.0)
                     plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04).set_label("U_k")
-                    ax.set_title(f"k={k} Katlı Simetri\n(Maks={max_u:.2f}, Ort={mean_u:.2f})", fontsize=10, fontweight="bold")
+                    ax.set_title(f"k={k} Katlı Simetri\n(Maks={max_u:.2f}, Nesne Ort={mean_u:.2f})", fontsize=10, fontweight="bold")
                     ax.axis("off")
                     st.pyplot(fig)
                     plt.close(fig)
@@ -313,7 +322,7 @@ if "Tekli" in analiz_modu:
                 np.random.seed(42)
                 shuffled_test = resim_np.copy().flatten()
                 np.random.shuffle(shuffled_test)
-                u_mat_test, _, _ = hesapla_ysum_matrisi(shuffled_test.reshape(resim_np.shape), baskin_k, b_kullanilan, ots_thresh)
+                u_mat_test, _, _ = hesapla_ysum_matrisi(shuffled_test.reshape(resim_np.shape), baskin_k, b_kullanilan, ots_thresh, maske_odakli=False)
                 neg_ort = float(np.mean(u_mat_test))
             
             fark_u = baskin_ort - neg_ort
@@ -359,6 +368,7 @@ if "Tekli" in analiz_modu:
 elif "İkili" in analiz_modu:
     st.markdown("---")
     st.subheader("🩺 İkili Görsel Karşılaştırma Paneli (Kavramsal Model)")
+    st.caption("İki farklı görseli ikili piksel matrisi seviyesinde yan yana karşılaştırarak asimetri ve düzenlilik farkını ($\Delta U$) analiz edin.")
 
     col_cmp1, col_cmp2 = st.columns(2)
 
@@ -395,14 +405,18 @@ elif "İkili" in analiz_modu:
         ots1 = int(np.mean(resim1_np)) or 128
         p1 = float(np.mean(resim1_np > ots1))
         b1 = (p1**2) + ((1.0 - p1)**2) if b_esik_val is None else b_esik_val
-        u_mat1, g1, y1 = hesapla_ysum_matrisi(resim1_np, k_val, b1, ots1)
-        mean_u1, max_u1 = float(np.mean(u_mat1)), float(np.max(u_mat1))
+        u_mat1, g1, y1 = hesapla_ysum_matrisi(resim1_np, k_val, b1, ots1, maske_odakli=roi_filtre)
+        non_zero1 = u_mat1[u_mat1 > 0.0]
+        mean_u1 = float(np.mean(non_zero1)) if len(non_zero1) > 0 else float(np.mean(u_mat1))
+        max_u1 = float(np.max(u_mat1))
 
         ots2 = int(np.mean(resim2_np)) or 128
         p2 = float(np.mean(resim2_np > ots2))
         b2 = (p2**2) + ((1.0 - p2)**2) if b_esik_val is None else b_esik_val
-        u_mat2, g2, y2 = hesapla_ysum_matrisi(resim2_np, k_val, b2, ots2)
-        mean_u2, max_u2 = float(np.mean(u_mat2)), float(np.max(u_mat2))
+        u_mat2, g2, y2 = hesapla_ysum_matrisi(resim2_np, k_val, b2, ots2, maske_odakli=roi_filtre)
+        non_zero2 = u_mat2[u_mat2 > 0.0]
+        mean_u2 = float(np.mean(non_zero2)) if len(non_zero2) > 0 else float(np.mean(u_mat2))
+        max_u2 = float(np.max(u_mat2))
 
         out_col1, out_col2 = st.columns(2)
         with out_col1:
@@ -428,14 +442,63 @@ elif "İkili" in analiz_modu:
         delta_u = mean_u2 - mean_u1
         st.metric(label="Skor Değişim Farkı (ΔU = U_ort2 - U_ort1)", value=f"{delta_u:+.3f}")
 
+        # DETAYLI İKİLİ KARŞILAŞTIRMA RAPORU VE OKUMA REHBERİ
         st.markdown("---")
-        st.markdown("### 📖 İkili Karşılaştırma Sonuçları Nasıl Yorumlanır?")
-        if abs(delta_u) < 0.08:
-            st.info("🟢 **Kararlı Sınırlı Yapı:** İki görsel arasında anlamlı bir simetri/asimetri değişimi kaydedilmemiştir.")
-        elif delta_u < -0.08:
-            st.warning("🟡 **Asimetri Artışı:** 2. görselde 1. görsele kıyasla simetri skorunda düşüş (asimetride artış) tespit edilmiştir.")
-        else:
-            st.success("🔵 **Simetri Artışı:** 2. görselde 1. görsele kıyasla dönel düzenlilik oranı artmıştır.")
+        st.subheader("💡 İkili Karşılaştırma Analizi & Sonuçlar Nasıl Okunur?")
+
+        tab_cmp_a, tab_cmp_b, tab_cmp_c = st.tabs([
+            "📊 Karşılaştırmalı Metrik Tablosu",
+            "🔍 Net Fark & Odak Değişimi",
+            "📖 Karşılaştırma Okuma Rehberi"
+        ])
+
+        with tab_cmp_a:
+            st.table({
+                "Parametre Metriği": [
+                    "İkileştirme Eşiği (Otsu)",
+                    "Açık Piksel Payı (p)",
+                    "Hesaplanan Şans Eşiği (B)",
+                    "Ortalama YSÜM Skoru (U_ort)",
+                    "Maksimum Odak Skoru (U_maks)"
+                ],
+                "1. Görsel": [f"{ots1}", f"%{p1*100:.1f}", f"{b1:.3f}", f"{mean_u1:.3f}", f"{max_u1:.3f}"],
+                "2. Görsel": [f"{ots2}", f"%{p2*100:.1f}", f"{b2:.3f}", f"{mean_u2:.3f}", f"{max_u2:.3f}"],
+                "Net Fark (Δ = Görsel2 - Görsel1)": [
+                    f"{ots2-ots1:+d}",
+                    f"%{(p2-p1)*100:+.1f}",
+                    f"{b2-b1:+.3f}",
+                    f"{delta_u:+.3f}",
+                    f"{max_u2-max_u1:+.3f}"
+                ]
+            })
+
+        with tab_cmp_b:
+            c_col1, c_col2 = st.columns(2)
+            with c_col1:
+                st.metric(
+                    label="Ortalama Simetri Kayması (ΔU_ort)",
+                    value=f"{delta_u:+.3f}",
+                    delta="Simetri Artışı" if delta_u > 0 else ("Asimetri Artışı" if delta_u < 0 else "Değişim Yok")
+                )
+            with c_col2:
+                st.metric(
+                    label="Zirve Odak Gücü Değişimi (ΔU_maks)",
+                    value=f"{max_u2-max_u1:+.3f}",
+                    delta="Odak Güçlendi" if max_u2 > max_u1 else ("Odak Zayıfladı" if max_u2 < max_u1 else "Sabit")
+                )
+
+        with tab_cmp_c:
+            st.markdown(r"""
+            ### 📖 İkili Karşılaştırma Değerleri Nasıl Yorumlanır?
+
+            #### 1. $\Delta U = U_{ort2} - U_{ort1}$ Fark Skoru Neyi Gösterir?
+            * **$\Delta U \approx 0.00$ ($\pm 0.08$ Aralığı):** İki görsel arasında anlamlı bir simetri/asimetri kayması kaydedilmemiştir. Yapı genel biçimsel kararlılığını korur.
+            * **$\Delta U < -0.08$ (Negatif Fark / Asimetri Artışı):** 2. görselde 1. görsele kıyasla simetri skorunda belirgin bir düşüş (açısal asimetride artış) gerçekleşmiştir.
+            * **$\Delta U > +0.08$ (Pozitif Fark / Düzenlilik Artışı):** 2. görsel 1. görsele kıyasla daha homojen ve yüksek bir dönel simetriye ulaşmıştır.
+
+            #### 2. Isı Haritalarının Kıyaslanması
+            * 1. görselde **kırmızı (yüksek simetri)** görünen odağın 2. görselde **maviye/sarıya (düşük simetri)** dönüşmesi, lokal simetri kaybının görsel kanıtıdır.
+            """)
 
 # ==============================================================================
 # MOD 3: TOPLU GÖRSEL ANALİZİ & CSV DIŞA AKTARIMI
@@ -476,15 +539,16 @@ else:
             p = float(np.mean(binary_np))
             b_val = (p**2) + ((1.0 - p)**2) if b_esik_val is None else b_esik_val
 
-            u_mat, _, _ = hesapla_ysum_matrisi(res_np, k_val_batch, b_val, ots)
-            mean_u = float(np.mean(u_mat))
+            u_mat, _, _ = hesapla_ysum_matrisi(res_np, k_val_batch, b_val, ots, maske_odakli=roi_filtre)
+            non_zero_batch = u_mat[u_mat > 0.0]
+            mean_u = float(np.mean(non_zero_batch)) if len(non_zero_batch) > 0 else float(np.mean(u_mat))
             max_u = float(np.max(u_mat))
 
             # Negatif kontrol (Seed=42)
             np.random.seed(42)
             shuffled_np = res_np.copy().flatten()
             np.random.shuffle(shuffled_np)
-            u_mat_neg, _, _ = hesapla_ysum_matrisi(shuffled_np.reshape(res_np.shape), k_val_batch, b_val, ots)
+            u_mat_neg, _, _ = hesapla_ysum_matrisi(shuffled_np.reshape(res_np.shape), k_val_batch, b_val, ots, maske_odakli=False)
             neg_u = float(np.mean(u_mat_neg))
 
             delta_u = mean_u - neg_u
