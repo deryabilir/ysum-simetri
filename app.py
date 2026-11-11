@@ -1,5 +1,3 @@
-
-# app.py
 # YSÜM — Yerel Simetri Üstünlük Modeli
 # Arayüz ve açıklama düzeltmeleri; ölçümler ayrı ayrı raporlanır.
 
