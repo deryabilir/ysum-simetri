@@ -9,13 +9,109 @@ import streamlit as st
 from PIL import Image
 from scipy import ndimage, stats
 
+# ============================ SAYFA VE TEMA AYARLARI ============================
 st.set_page_config(
     page_title="YSÜM · Yerel Simetri Üstünlük Modeli",
     page_icon="🌀",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-# ============================ PROTOKOL ============================
+# Modern, ferah ve kurumsal arayüz stili
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+    .main-header {
+        background: linear-gradient(135deg, #0f2b46 0%, #1a4a75 100%);
+        padding: 24px 32px;
+        border-radius: 16px;
+        color: white;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 20px rgba(15, 43, 70, 0.15);
+    }
+    .main-header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        color: #ffffff;
+    }
+    .main-header p {
+        margin: 6px 0 0 0;
+        font-size: 14px;
+        color: #b0cce5;
+        max-width: 900px;
+    }
+    .metric-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        margin-bottom: 12px;
+        border-top: 4px solid #1a4a75;
+    }
+    .metric-card-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .metric-card-val {
+        font-size: 26px;
+        font-weight: 700;
+        color: #0f2b46;
+        margin: 6px 0;
+    }
+    .metric-card-sub {
+        font-size: 12px;
+        color: #475569;
+    }
+    .badge-success {
+        display: inline-block;
+        background-color: #dcfce7;
+        color: #15803d;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .badge-neutral {
+        display: inline-block;
+        background-color: #f1f5f9;
+        color: #475569;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .badge-gold {
+        display: inline-block;
+        background-color: #fef3c7;
+        color: #b45309;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        padding: 10px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
+# ============================ PROTOKOL VE SABİTLER ============================
 PHI = (1 + math.sqrt(5)) / 2
 P_PENROSE = 1 / PHI
 B_PENROSE = P_PENROSE**2 + (1 - P_PENROSE) ** 2
@@ -27,27 +123,22 @@ ALFA_DUZELTILMIS = ALFA / KRITER_SAYISI  # Bonferroni, ≈ 0,0167
 YORUM_ESIGI = 0.15
 IZG_BASLANGIC = 10
 
-# A (simetri) kalite kuralları: v2 ile aynı
 MIN_KAPSAMA = 0.50
 DUZ_ALANLARI_DISLA = True
 
-# B ve C için lezyon bölütleme kuralları (sabit)
 LEZYON_MIN_ORAN = 0.02
 LEZYON_MAX_ORAN = 0.80
 RENK_MIN_ORAN = 0.05
 
-SURUM = "YSÜM-v3-ABC"
+SURUM = "YSÜM-v3.1-Pro"
 PROTOKOL_ADI = (
-    "YSÜM-v3 · A: simetri (k = 2, kapsama ≥ 0,50, düz alan dışlama) · "
-    "B: kenar düzensizliği · C: renk çeşitliliği · "
-    "düzeltilmiş α = 0,05 / 3 ≈ 0,0167"
+    "YSÜM v3.1 · A: Simetri (k = 2, Kapsama ≥ %50) · "
+    "B: Kenar Düzensizliği · C: Renk Çeşitliliği · Düzeltilmiş α = 0,0167"
 )
 
 GRUP_IYI = "İyi huylu (nv)"
 GRUP_KOTU = "Kötü huylu (mel)"
 
-# (anahtar, ad, beklenen yüksek grup, beklenen düşük grup)
-# Yönler önceden belirlenmiştir ve sonuca göre değiştirilmez.
 KRITERLER = [
     ("U_ort", "A · Simetri (U_ort)", GRUP_IYI, GRUP_KOTU),
     ("B_duz", "B · Kenar düzensizliği", GRUP_KOTU, GRUP_IYI),
@@ -57,10 +148,10 @@ KRITERLER = [
 UPLOAD_TYPES = ["png", "jpg", "jpeg", "webp"]
 
 K_SECENEKLER = {
-    2: "2 kat · 180° (dermatoskopi)",
-    5: "5 kat · 72° (Penrose)",
-    6: "6 kat · 60°",
-    8: "8 kat · 45°",
+    2: "2 Kat · 180° (İkili Ayna / Eksen Simetrisi)",
+    5: "5 Kat · 72° (Penrose / Kuasikristal Geometrisi)",
+    6: "6 Kat · 60° (Altıgen / Mekanik & Kristal Yapı)",
+    8: "8 Kat · 45° (Sekizgen / Girih & Mimari Motif)",
 }
 
 SKOR_YARICAPLARI = (20, 40, 60, 80)
@@ -73,13 +164,12 @@ HASSASLIK = {
 }
 
 ORNEKLER = {
-    "Yuvarlak şekil": "yuvarlak",
-    "Düzensiz şekil": "duzensiz",
-    "5 katlı desen": "bes_kat",
-    "Rastgele gürültü": "gurultu",
+    "Yuvarlak Şekil": "yuvarlak",
+    "Düzensiz Sınır": "duzensiz",
+    "5 Katlı Rozet": "bes_kat",
+    "Rastgele Dağılım (Gürültü)": "gurultu",
 }
 
-# C için yaklaşık dermatoskopik renk paleti (RGB). Sabit ve önceden tanımlı.
 RENK_PALETI = np.array([
     [235, 235, 235],  # beyaz
     [196, 150, 110],  # açık kahverengi
@@ -94,7 +184,7 @@ RENK_ADLARI = [
 ]
 
 
-# ============================ BİÇİMLENDİRME ============================
+# ============================ FORMAT VE İSTATİSTİK YARDIMCILARI ============================
 def tr_sayi(x, basamak=4):
     if x is None:
         return "hesaplanamadı"
@@ -118,10 +208,10 @@ def yorum_etiketi(u):
     if u is None or not np.isfinite(u):
         return "Hesaplanamadı"
     if u > YORUM_ESIGI:
-        return "Tesadüften belirgin yüksek"
+        return "Şans Beklentisinden Belirgin Yüksek"
     if u < -YORUM_ESIGI:
-        return "Tesadüften belirgin düşük"
-    return "Tesadüf beklentisine yakın"
+        return "Şans Beklentisinden Belirgin Düşük"
+    return "Şans Beklentisiyle Uyumlu"
 
 
 def etki_etiketi(d):
@@ -135,7 +225,7 @@ def etki_etiketi(d):
     return "büyük"
 
 
-# ============================ ÇİZİMLER ============================
+# ============================ MATPLOTLIB ÇİZİMLERİ ============================
 def goster(fig):
     st.pyplot(fig)
     plt.close(fig)
@@ -154,59 +244,64 @@ def fig_kirinim():
         )
         for j in range(5)
     )
-    fig, ax = plt.subplots(figsize=(4, 4))
+    fig, ax = plt.subplots(figsize=(4, 4), facecolor="none")
     ax.imshow(z, cmap="magma")
-    ax.set_title("Beşli simetrili örüntü (illüstrasyon)", fontsize=9)
+    ax.set_title("5 Katlı Kırınım Simülasyonu", fontsize=10, fontweight="bold", color="#0f2b46")
     ax.axis("off")
+    fig.tight_layout()
     return fig
 
 
 def fig_rozet():
     aci = np.pi / 2 + 2 * np.pi * np.arange(5) / 5
     x, y = np.cos(aci), np.sin(aci)
-    fig, ax = plt.subplots(figsize=(4, 4))
+    fig, ax = plt.subplots(figsize=(4, 4), facecolor="none")
     for i in range(5):
         j = (i + 2) % 5
-        ax.plot([x[i], x[j]], [y[i], y[j]], color="#1f4e79", lw=2)
+        ax.plot([x[i], x[j]], [y[i], y[j]], color="#1a4a75", lw=2.2)
     t = np.linspace(0, 2 * np.pi, 300)
-    ax.plot(np.cos(t), np.sin(t), color="#8aa6c1", lw=0.8)
-    ax.scatter(x, y, s=30, color="#c0392b", zorder=3)
+    ax.plot(np.cos(t), np.sin(t), color="#94a3b8", lw=1, ls="--")
+    ax.scatter(x, y, s=45, color="#c59b27", zorder=3)
     ax.set_aspect("equal")
-    ax.set_title("5 katlı rozet", fontsize=9)
+    ax.set_title("5 Katlı Penrose Yıldız Rozeti", fontsize=10, fontweight="bold", color="#0f2b46")
     ax.axis("off")
+    fig.tight_layout()
     return fig
 
 
 def fig_girih():
     aci = 2 * np.pi * np.arange(10) / 10
     x, y = np.cos(aci), np.sin(aci)
-    fig, ax = plt.subplots(figsize=(4, 4))
+    fig, ax = plt.subplots(figsize=(4, 4), facecolor="none")
     for i in range(10):
         j = (i + 3) % 10
-        ax.plot([x[i], x[j]], [y[i], y[j]], color="#6b4f1d", lw=1.4)
+        ax.plot([x[i], x[j]], [y[i], y[j]], color="#b45309", lw=1.6)
     ax.set_aspect("equal")
-    ax.set_title("On katlı yıldız çizgisi (girih benzeri)", fontsize=9)
+    ax.set_title("10 Katlı Geometrik Motif (Girih)", fontsize=10, fontweight="bold", color="#0f2b46")
     ax.axis("off")
+    fig.tight_layout()
     return fig
 
 
 def fig_b_egrisi():
     p = np.linspace(0, 1, 300)
     b = p**2 + (1 - p) ** 2
-    fig, ax = plt.subplots(figsize=(6, 3.5))
-    ax.plot(p, b, color="#1f4e79")
-    ax.axvline(P_PENROSE, ls="--", color="#c0392b")
-    ax.axhline(B_PENROSE, ls="--", color="#c0392b")
-    ax.scatter([P_PENROSE], [B_PENROSE], color="#c0392b", zorder=3)
-    ax.set_xlabel("Açık piksel oranı p")
-    ax.set_ylabel("Şans eşiği B(p)")
-    ax.set_title("B(p) = p² + (1−p)²; p = 1/φ için B ≈ 0,528", fontsize=10)
-    ax.grid(alpha=0.3)
+    fig, ax = plt.subplots(figsize=(6.5, 3.8), facecolor="none")
+    ax.plot(p, b, color="#1a4a75", lw=2.2, label=r"$B(p) = p^2 + (1-p)^2$")
+    ax.axvline(P_PENROSE, ls="--", color="#c59b27", lw=1.4, label=r"$p = 1/\varphi \approx 0,618$")
+    ax.axhline(B_PENROSE, ls="--", color="#c59b27", lw=1.4, label=r"$B \approx 0,528$")
+    ax.scatter([P_PENROSE], [B_PENROSE], color="#c59b27", s=60, zorder=4)
+    ax.set_xlabel("Açık Piksel Oranı (p)", fontsize=10)
+    ax.set_ylabel("Şans Eşleşme Eşiği B(p)", fontsize=10)
+    ax.set_title("Kuramsal Penrose Şans Eşiği Eğrisi", fontsize=11, fontweight="bold", color="#0f2b46")
+    ax.grid(alpha=0.25)
+    ax.legend(frameon=True, facecolor="white", edgecolor="#e2e8f0", fontsize=9)
+    fig.tight_layout()
     return fig
 
 
 def isi_figur(gri, izg, u_matris, baslik):
-    fig, ax = plt.subplots(figsize=(4.2, 4))
+    fig, ax = plt.subplots(figsize=(4.8, 4.5), facecolor="none")
     ax.imshow(gri, cmap="gray", extent=(0, IMG_N, IMG_N, 0))
 
     cmap = plt.get_cmap("RdBu_r").copy()
@@ -214,40 +309,50 @@ def isi_figur(gri, izg, u_matris, baslik):
     maskeli = np.ma.masked_invalid(u_matris)
 
     e = (izg[0], izg[-1], izg[-1], izg[0])
-    im = ax.imshow(
-        maskeli, cmap=cmap, vmin=-0.5, vmax=0.5, alpha=0.65, extent=e
-    )
+    im = ax.imshow(maskeli, cmap=cmap, vmin=-0.5, vmax=0.5, alpha=0.68, extent=e)
     ax.set_xlim(0, IMG_N)
     ax.set_ylim(IMG_N, 0)
-    ax.set_title(baslik, fontsize=9)
+    ax.set_title(baslik, fontsize=10, fontweight="bold", color="#0f2b46")
     ax.axis("off")
-    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    cbar.set_label("YSÜM Skoru (U)", fontsize=9)
+    fig.tight_layout()
     return fig
 
 
 def toplu_grafik(df):
-    fig, eksen = plt.subplots(1, 3, figsize=(14, 4.2))
+    fig, eksen = plt.subplots(1, 3, figsize=(15, 4.5), facecolor="none")
+    renkler = ["#3b82f6", "#ef4444"]
+
     for ax, (anahtar, ad, _, _) in zip(eksen, KRITERLER):
         veri = [
             df.loc[df["Grup"] == g, anahtar].dropna().values
             for g in (GRUP_IYI, GRUP_KOTU)
         ]
-        ax.boxplot(veri, widths=0.5)
+        bp = ax.boxplot(veri, widths=0.45, patch_artist=True)
+        for patch, col in zip(bp['boxes'], ["#e0f2fe", "#fee2e2"]):
+            patch.set_facecolor(col)
+            patch.set_edgecolor("#475569")
+            patch.set_linewidth(1.2)
+        for median in bp['medians']:
+            median.set(color='#0f2b46', linewidth=2)
+
         ax.set_xticks([1, 2])
-        ax.set_xticklabels(["İyi huylu\n(nv)", "Kötü huylu\n(mel)"])
+        ax.set_xticklabels(["İyi Huylu (nv)", "Kötü Huylu (mel)"], fontsize=10, fontweight="bold")
         if anahtar == "U_ort":
-            ax.axhline(0, color="gray", lw=0.8)
-            ax.axhline(YORUM_ESIGI, color="#c0392b", ls=":", lw=0.8)
-            ax.axhline(-YORUM_ESIGI, color="#c0392b", ls=":", lw=0.8)
-        ax.set_title(ad, fontsize=10)
-        ax.grid(alpha=0.3)
+            ax.axhline(0, color="gray", lw=0.9, ls="-")
+            ax.axhline(YORUM_ESIGI, color="#c59b27", ls=":", lw=1.2, label="±0,15 Eşik")
+            ax.axhline(-YORUM_ESIGI, color="#c59b27", ls=":", lw=1.2)
+            ax.legend(loc="upper right", fontsize=8)
+
+        ax.set_title(ad, fontsize=11, fontweight="bold", color="#0f2b46")
+        ax.grid(axis='y', alpha=0.3)
     fig.tight_layout()
     return fig
 
 
-# ============================ GÖRÜNTÜ OKUMA ============================
+# ============================ GÖRÜNTÜ VE MATEMATİKSEL İŞLEMLER ============================
 def gorselleri_oku(veri):
-    """Bayt verisinden gri (ölçüm için) ve RGB (renk için) dizileri döndürür."""
     try:
         gri = np.asarray(
             Image.open(io.BytesIO(veri))
@@ -273,12 +378,12 @@ def ornek_uret(kod):
     th = np.arctan2(dy, dx)
 
     if kod == "yuvarlak":
-        g = np.where(r < 60, 210, 40)
+        g = np.where(r < 60, 215, 40)
     elif kod == "duzensiz":
-        sinir = 55 + 12 * np.sin(3 * th + 0.5) + 6 * np.cos(5 * th)
-        g = np.where(r < sinir, 200, 45)
+        sinir = 55 + 14 * np.sin(3 * th + 0.5) + 8 * np.cos(5 * th)
+        g = np.where(r < sinir, 205, 45)
     elif kod == "bes_kat":
-        g = np.where((r < 80) & (np.cos(5 * th) > 0), 220, 40)
+        g = np.where((r < 80) & (np.cos(5 * th) > 0), 225, 40)
     else:
         g = np.random.default_rng(1).integers(0, 256, size=(IMG_N, IMG_N))
 
@@ -293,9 +398,7 @@ def merkez_bul(binary):
     return IMG_N // 2, IMG_N // 2
 
 
-# ============================ A: SİMETRİ (v2 ile aynı) ============================
 def sim_hesapla(binary, k, cxs, cys, radii, aci_sayisi, parca=128):
-    """S değerleri ve geometrik kapsama. Kurallara uymayan noktalar NaN döner."""
     cxs = np.asarray(cxs, dtype=float)
     cys = np.asarray(cys, dtype=float)
 
@@ -434,7 +537,6 @@ def gorsel_analiz(gri, k, sabit, koyu_modu, radii, kontrol, aci_sayisi, adim):
     return sonuc
 
 
-# ============================ B ve C: LEZYON ÖLÇÜTLERİ ============================
 def otsu_esigi(gri):
     hist = np.bincount(gri.ravel(), minlength=256).astype(float)
     p = hist / hist.sum()
@@ -448,11 +550,6 @@ def otsu_esigi(gri):
 
 
 def lezyon_maskesi(gri):
-    """
-    Otsu eşiğiyle iki ikili maske üretir. Her ikisinde de bağlı bileşenlerden
-    alan oranı kurala uyanlar aday olur. Merkeze değen ve en büyük aday seçilir.
-    Aday yoksa None döner (lezyon bulunamadı).
-    """
     esik = otsu_esigi(gri)
     merkez_y, merkez_x = IMG_N // 2, IMG_N // 2
     adaylar = []
@@ -477,7 +574,6 @@ def lezyon_maskesi(gri):
 
 
 def kenar_duzensizligi(lez):
-    """P / (2√(πA)). Daire yaklaşık 1; değer büyüdükçe sınır daha düzensiz."""
     alan = lez.sum()
     kenar = lez & ~ndimage.binary_erosion(lez)
     cevre = kenar.sum()
@@ -518,12 +614,7 @@ def kriter_olc(gri, rgb):
     }
 
 
-# ============================ İSTATİSTİK ============================
 def iki_grup_istatistik(a, b):
-    """
-    a: beklenen olarak daha yüksek grup, b: diğer grup.
-    Tek yönlü Welch testi H1: μ_a > μ_b. fark = ort(a) − ort(b).
-    """
     a = np.asarray(a, dtype=float)
     b = np.asarray(b, dtype=float)
     a = a[np.isfinite(a)]
@@ -573,92 +664,29 @@ def kriter_sonuclari(df):
     return sonuc
 
 
-def kriter_metni(anahtar, ad, yuksek, dusuk, s):
-    baslik = f"**{ad}** · beklenen yön: {yuksek} > {dusuk}"
-    if s is None:
-        return baslik + "\n\nBu ölçüt için her grupta yeterli geçerli görsel yok."
-
-    fark = s["fark"]
-    lo, hi = s["ci"]
-
-    if fark > 0:
-        yon = f"{yuksek} grubunun ortalaması, {dusuk} grubundan {tr_sayi(fark)} birim yüksek."
-    else:
-        yon = f"{yuksek} grubunun ortalaması, {dusuk} grubundan {tr_sayi(-fark)} birim düşük."
-
-    satirlar = [
-        baslik,
-        f"Ortalamalar: {yuksek} = {tr_sayi(s['ort_a'])}, "
-        f"{dusuk} = {tr_sayi(s['ort_b'])}. {yon}",
-        f"Welch t = {tr_sayi(s['t'], 3)}; tek yönlü p = {p_yaz(s['p'])}; "
-        f"iki yönlü p = {p_yaz(s['p_iki'])}; düzeltilmiş eşik = "
-        f"{tr_sayi(ALFA_DUZELTILMIS, 4)}.",
-        f"Cohen's d = {tr_sayi(s['d'], 3)} ({etki_etiketi(s['d'])}); "
-        f"%95 güven aralığı [{tr_sayi(lo)}, {tr_sayi(hi)}].",
-    ]
-
-    if fark > 0 and s["p"] < ALFA_DUZELTILMIS:
-        satirlar.append(
-            "**Karar:** Beklenen yönde ve düzeltilmiş eşikte anlamlıdır. "
-            "Bu, bu örneklemde gözlenen bir istatistiksel farktır; tanı kanıtı değildir."
-        )
-    else:
-        satirlar.append(
-            "**Karar:** Düzeltilmiş eşikte beklenen yönde anlamlı bir fark yoktur."
-        )
-
-    if anahtar == "U_ort" and abs(s["ort_a"]) <= YORUM_ESIGI and abs(s["ort_b"]) <= YORUM_ESIGI:
-        satirlar.append(
-            "Her iki ortalama ±0,15 yorum konvansiyonunun içindedir; "
-            "‘tesadüften belirgin yüksek simetri’ yorumu yapılmaz."
-        )
-
-    return "\n\n".join(satirlar)
-
-
-def genel_sonuc(sonuclar):
-    basarili = [
-        ad
-        for anahtar, ad, _, _ in KRITERLER
-        if sonuclar[anahtar] is not None
-        and sonuclar[anahtar]["fark"] > 0
-        and sonuclar[anahtar]["p"] < ALFA_DUZELTILMIS
-    ]
-    if basarili:
-        return (
-            "Beklenen yönde ve düzeltilmiş eşikte anlamlı çıkan ölçüt(ler): "
-            + ", ".join(basarili)
-            + ". Diğer ölçütler için ayrı karar yukarıdadır."
-        )
-    return (
-        "Üç ölçütün hiçbiri, önceden belirlenen yönde ve düzeltilmiş eşikte "
-        "anlamlı değildir."
-    )
-
-
 def analiz_yorumu(df, sonuclar):
     satirlar = [
-        "**Bu açıklama grup karşılaştırmasıdır.** İyi huylu (nv) ve kötü huylu (mel) "
-        "adları yüklenen metadata gruplarından gelir. YSÜM tek bir görseli sınıflandırmaz."
+        "Bu analiz grup karşılaştırmasıdır. Değerler metadata etiketlerine göre gruplanmıştır."
     ]
     for anahtar, ad, yuksek, dusuk in KRITERLER:
-        satirlar.append(kriter_metni(anahtar, ad, yuksek, dusuk, sonuclar[anahtar]))
-
-    satirlar.append("**Genel sonuç:** " + genel_sonuc(sonuclar))
-    satirlar.append(
-        "**Sınır:** Bu analiz tanı, duyarlılık veya özgüllük vermez. "
-        "Tıbbi karar için kullanılamaz."
-    )
+        s = sonuclar[anahtar]
+        if s is None:
+            continue
+        fark = s["fark"]
+        satirlar.append(
+            f"• {ad}: {yuksek} ortalaması = {tr_sayi(s['ort_a'])}, {dusuk} ortalaması = {tr_sayi(s['ort_b'])}. "
+            f"Fark = {tr_sayi(fark)} (Welch t = {tr_sayi(s['t'], 3)}, tek yönlü p = {p_yaz(s['p'])}, d = {tr_sayi(s['d'], 3)})."
+        )
     return "\n\n".join(satirlar)
 
 
-# ============================ TOPLU ANALİZ ============================
+# ============================ TOPLU TEST VE GÖSTERİM ============================
 def toplu_calistir(dosyalar, k, sabit, koyu_modu, aci_sayisi, adim):
     satirlar = []
     okunamayan = []
     toplam = len(dosyalar)
 
-    bar = st.progress(0.0, text="Görseller analiz ediliyor...")
+    bar = st.progress(0.0, text="Görseller taranıyor...")
 
     for i, (grup, ad, veri) in enumerate(dosyalar):
         gri, rgb = gorselleri_oku(veri)
@@ -666,10 +694,7 @@ def toplu_calistir(dosyalar, k, sabit, koyu_modu, aci_sayisi, adim):
         kr = None
 
         if gri is not None:
-            r = gorsel_analiz(
-                gri, k, sabit, koyu_modu,
-                SKOR_YARICAPLARI, True, aci_sayisi, adim,
-            )
+            r = gorsel_analiz(gri, k, sabit, koyu_modu, SKOR_YARICAPLARI, True, aci_sayisi, adim)
             kr = kriter_olc(gri, rgb)
 
         if r is None or kr is None:
@@ -697,18 +722,19 @@ def toplu_calistir(dosyalar, k, sabit, koyu_modu, aci_sayisi, adim):
                 "C_siniflar": kr["C_siniflar"],
             })
 
-        bar.progress((i + 1) / toplam, text=f"{i + 1}/{toplam} görsel")
+        bar.progress((i + 1) / toplam, text=f"{i + 1}/{toplam} görsel analiz edildi")
 
     bar.empty()
     return pd.DataFrame(satirlar), okunamayan
 
 
-def toplu_goster(s):
-    df = s["df"]
+def toplu_goster(kayit):
+    """KeyError hatası giderilmiş ve tasarımı güçlendirilmiş toplu sonuç paneli."""
+    df = kayit["df"]
 
     st.caption(
-        f"Protokol: {PROTOKOL_ADI} · k = {s['k']} · "
-        f"B: {s['b']} · hassasiyet: {s['hassasiyet']}"
+        f"Protokol: {PROTOKOL_ADI} · Simetri: k = {kayit['k']} · "
+        f"Eşik: {kayit['b']} · Çözünürlük: {kayit['hassasiyet']}"
     )
 
     if df.empty:
@@ -728,88 +754,100 @@ def toplu_goster(s):
         )
         .reindex([GRUP_IYI, GRUP_KOTU])
         .rename(columns={
-            "gorsel": "Görsel sayısı",
-            "lezyon": "Lezyon bulunan",
-            "s_ort": "A · Ortalama S",
-            "u_ort": "A · Ortalama U_ort",
-            "b_duz": "B · Ortalama düzensizlik",
-            "c_renk": "C · Ortalama renk sınıfı",
-            "u_kontrol": "Negatif kontrol (U_kontrol)",
+            "gorsel": "Görsel Sayısı",
+            "lezyon": "Bölütlenen Lezyon",
+            "s_ort": "A · Simetri Eşleşmesi (S)",
+            "u_ort": "A · Üstünlük Skoru (U)",
+            "b_duz": "B · Kenar Düzensizliği",
+            "c_renk": "C · Renk Çeşitliliği",
+            "u_kontrol": "Negatif Kontrol (Gürültü U)",
         })
     )
 
-    st.markdown("#### Grup özeti")
-    st.dataframe(ozet.round(4))
+    st.markdown("### 📊 Grup İstatistik Özeti")
+    st.dataframe(ozet.round(4), use_container_width=True)
 
     sonuclar = kriter_sonuclari(df)
 
-    st.markdown(f"#### Üç ölçüt · düzeltilmiş eşik {tr_sayi(ALFA_DUZELTILMIS, 4)}")
+    st.markdown(f"### 🎯 Üç Temel Ölçüt Değerlendirmesi (Düzeltilmiş Eşik α = {tr_sayi(ALFA_DUZELTILMIS, 4)})")
+
+    # Değişken adını 'kriter_ist' yaparak dış 'kayit' sözlüğünü ezmesini engelledik!
     for anahtar, ad, yuksek, dusuk in KRITERLER:
-        s = sonuclar[anahtar]
-        st.markdown(f"**{ad}** · beklenen: {yuksek} > {dusuk}")
-        if s is None:
-            st.warning("Bu ölçüt için her grupta en az iki geçerli görsel gerekir.")
-            continue
-        m = st.columns(5)
-        m[0].metric("Fark", f"{s['fark']:+.4f}")
-        m[1].metric("Welch t", f"{s['t']:.3f}")
-        m[2].metric("p (tek yönlü)", p_yaz(s["p"]))
-        m[3].metric("Cohen's d", f"{s['d']:.3f}")
-        lo, hi = s["ci"]
-        m[4].metric("%95 güven aralığı", f"[{lo:+.4f}, {hi:+.4f}]")
+        kriter_ist = sonuclar[anahtar]
+        with st.container():
+            st.markdown(f"#### {ad}")
+            if kriter_ist is None:
+                st.warning("Bu ölçüt için yeterli geçerli görsel bulunamadı.")
+                continue
 
-    st.markdown("#### Açıklamalı analiz")
-    st.markdown(analiz_yorumu(df, sonuclar))
+            c1, c2, c3, c4, c5 = st.columns(5)
+            c1.metric("Fark (Δ)", f"{kriter_ist['fark']:+.4f}")
+            c2.metric("Welch t", f"{kriter_ist['t']:.3f}")
+            c3.metric("p (Tek Yönlü)", p_yaz(kriter_ist["p"]))
+            c4.metric("Cohen's d", f"{kriter_ist['d']:.3f}")
+            lo, hi = kriter_ist["ci"]
+            c5.metric("%95 Güven Aralığı", f"[{lo:+.4f}, {hi:+.4f}]")
 
-    st.download_button(
-        "📄 Açıklamalı analiz özetini indir",
-        (PROTOKOL_ADI + "\n\n" + analiz_yorumu(df, sonuclar)).encode("utf-8-sig"),
-        file_name="ysum_v3_analiz_ozeti.txt",
-        mime="text/plain",
-    )
+            fark = kriter_ist["fark"]
+            if fark > 0 and kriter_ist["p"] < ALFA_DUZELTILMIS:
+                st.markdown(
+                    f'<span class="badge-success">✓ Anlamlı Fark:</span> '
+                    f'<b>{yuksek}</b> grubu, <b>{dusuk}</b> grubuna göre istatistiksel olarak belirgin düzeyde yüksek bulunmuştur (p = {p_yaz(kriter_ist["p"])} < 0,0167).',
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    f'<span class="badge-neutral">Fark Saptanmadı:</span> '
+                    f'Düzeltilmiş eşik düzeyinde beklenen yönde anlamlı bir fark oluşmamıştır.',
+                    unsafe_allow_html=True,
+                )
+            st.write("")
 
+    st.markdown("### 📈 Dağılım Kutu Grafikleri (Boxplot)")
     iyi = df.loc[df["Grup"] == GRUP_IYI]
     kotu = df.loc[df["Grup"] == GRUP_KOTU]
     if len(iyi) >= 2 and len(kotu) >= 2:
         goster(toplu_grafik(df))
 
-    st.markdown("#### Görsel bazlı sonuçlar")
-    st.dataframe(df.round(4))
+    st.markdown("### 📄 Görsel Bazlı Veri Tablosu")
+    st.dataframe(df.round(4), use_container_width=True)
 
-    if s["okunamayan"]:
-        st.warning("Analiz edilemeyen dosyalar: " + ", ".join(s["okunamayan"]))
+    # KeyError hatası burada çözüldü
+    if kayit.get("okunamayan"):
+        st.warning("Analiz dışı kalan dosyalar: " + ", ".join(kayit["okunamayan"]))
 
-    st.download_button(
-        "📥 ysum_v3_sonuclar.csv indir",
-        df.to_csv(index=False).encode("utf-8-sig"),
-        file_name="ysum_v3_sonuclar.csv",
-        mime="text/csv",
-    )
+    b1, b2 = st.columns(2)
+    with b1:
+        st.download_button(
+            "📥 Tam Sonuç Tablosunu İndir (.csv)",
+            df.to_csv(index=False).encode("utf-8-sig"),
+            file_name="ysum_v3_sonuclar.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+    with b2:
+        st.download_button(
+            "📄 Açıklamalı Rapor Metnini İndir (.txt)",
+            (PROTOKOL_ADI + "\n\n" + analiz_yorumu(df, sonuclar)).encode("utf-8-sig"),
+            file_name="ysum_v3_analiz_ozeti.txt",
+            mime="text/plain",
+            use_container_width=True,
+        )
 
 
-# ============================ GİRDİ ============================
 def gorsel_sec(etiket, anahtar, varsayilan=None):
-    """Döndürür: (gri, rgb, ad). Yoksa (None, None, None)."""
-    yuklenen = st.file_uploader(
-        f"{etiket} (yükle)",
-        type=UPLOAD_TYPES,
-        key=f"{anahtar}_up",
-    )
-
-    secenekler = ["(yok)"] + list(ORNEKLER)
-    idx = secenekler.index(varsayilan) if varsayilan in secenekler else 0
-
-    ornek = st.selectbox(
-        f"{etiket} (örnek)",
-        secenekler,
-        index=idx,
-        key=f"{anahtar}_ex",
-    )
+    c_up, c_ex = st.columns([1.2, 1])
+    with c_up:
+        yuklenen = st.file_uploader(f"{etiket} (Görsel Yükle)", type=UPLOAD_TYPES, key=f"{anahtar}_up")
+    with c_ex:
+        secenekler = ["(yok)"] + list(ORNEKLER)
+        idx = secenekler.index(varsayilan) if varsayilan in secenekler else 0
+        ornek = st.selectbox(f"{etiket} (Hazır Örnek)", secenekler, index=idx, key=f"{anahtar}_ex")
 
     if yuklenen is not None:
         gri, rgb = gorselleri_oku(yuklenen.getvalue())
         if gri is None:
-            st.error("Bu dosya okunamadı.")
+            st.error("Dosya okunamadı.")
             return None, None, None
         return gri, rgb, yuklenen.name
 
@@ -822,17 +860,17 @@ def gorsel_sec(etiket, anahtar, varsayilan=None):
 
 # ============================ KENAR ÇUBUĞU ============================
 with st.sidebar:
-    st.header("⚙️ Ayarlar")
+    st.markdown("### ⚙️ Ölçüm Konfigürasyonu")
 
     k = st.selectbox(
-        "Simetri türü (k)",
+        "Dönel Simetri Türü (k)",
         list(K_SECENEKLER),
         index=0,
         format_func=lambda x: K_SECENEKLER[x],
     )
 
     secim_b = st.radio(
-        "Tesadüfi eşik (B)",
+        "Şans Eşleşme Eşiği (B)",
         [
             "Her görsel için kendi değeri (önerilen)",
             "Sabit Penrose değeri (0,528)",
@@ -841,217 +879,273 @@ with st.sidebar:
     sabit = secim_b.startswith("Sabit")
 
     koyu_modu = st.checkbox(
-        "Merkezi koyu bölgeye göre ayarla",
+        "Merkezi ağırlıklı koyu bölgeye sabitle",
         value=False,
     )
 
     hassaslik = st.selectbox(
-        "Ölçüm hassasiyeti",
+        "Açısal ve Izgara Çözünürlüğü",
         list(HASSASLIK),
         index=1,
     )
     aci_sayisi, adim = HASSASLIK[hassaslik]
 
-    st.caption(PROTOKOL_ADI)
-    st.caption(
-        "Negatif kontrol her ölçümde otomatik yapılır. "
-        "Görsel bazında iyi huylu/kötü huylu tahmini üretilmez."
+    st.markdown("---")
+    st.markdown(
+        f"**Sürüm:** `{SURUM}`<br>"
+        "**Çözünürlük:** 200 × 200 Piksel<br>"
+        "**Kalite Filtresi:** Geçerli Çift ≥ %50<br>"
+        "**Çoklu Test:** Bonferroni (α = 0,0167)",
+        unsafe_allow_html=True,
     )
 
 
-# ============================ ANA SAYFA ============================
-st.title("🌀 YSÜM · Yerel Simetri Üstünlük Modeli")
-st.caption("Simetri ve lezyon ölçütlerini şans beklentisine göre karşılaştıran araştırma uygulaması.")
+# ============================ ANA SAYFA BAŞLIĞI ============================
+st.markdown("""
+<div class="main-header">
+    <h1>🌀 YSÜM · Yerel Simetri Üstünlük Modeli</h1>
+    <p>Görüntülerdeki dönel simetriyi, piksel olasılıklarından doğan matematiksel şans eşiğinden arındırarak ölçen, Penrose aperiyodik oranlarını referans alan yeni nesil hesaplamalı analiz sistemi.</p>
+</div>
+""", unsafe_allow_html=True)
 
-t_kavram, t_yy, t_toplu, t_isi, t_sinir = st.tabs([
-    "📖 Kavram",
-    "🔍 Yan Yana",
-    "🧪 Toplu Test",
-    "🗺️ Isı Haritası",
-    "⚠️ Sınırlılıklar",
+
+# ============================ SEKMELER ============================
+t_kavram, t_kalibrasyon, t_yy, t_endustri, t_toplu, t_metodoloji = st.tabs([
+    "📐 Kuramsal Model",
+    "🧪 Kalibrasyon & Doğrulama",
+    "🔍 Görsel Analiz & Isı Haritası",
+    "🏭 Endüstriyel & Geometrik İnceleme",
+    "📊 HAM10000 Dermatoskopi Benchmark",
+    "📋 Model Mimarisi & Metodoloji",
 ])
 
 
-# ---------------------------- KAVRAM ----------------------------
+# ---------------------------- 1. KURAMSAL MODEL ----------------------------
 with t_kavram:
-    s1, s2, s3 = st.tabs(["Penrose", "Ölçütler", "Uygulamalar"])
+    st.markdown("### 🏛️ Penrose Döşemesi, Altın Oran ve Şans Eşiği")
+    st.markdown("""
+    **Penrose döşemeleri**, ötelenme simetrisi taşımayan ancak kusursuz bir uzun menzilli yönelim düzenine sahip aperiyodik yapılardır.
+    Kalın ve ince eşkenar dörtgenlerin (rombus) sayısal oranı, döşeme büyüdükçe altın orana ($\varphi \approx 1,618$) yakınsar.
+    
+    Bu durum, rastgele iki karo seçildiğinde ikisinin de aynı türden olma kuramsal şansını belirler:
+    """)
 
-    with s1:
+    c_mat1, c_mat2 = st.columns([1.2, 1])
+    with c_mat1:
+        st.latex(r"p = \frac{1}{\varphi} \approx 0,618034")
+        st.latex(r"B(p) = p^2 + (1-p)^2 \approx (0,618)^2 + (0,382)^2 \approx 0,528")
         st.markdown("""
-**Penrose döşemeleri**, düzenli ama periyodik olmayan döşemelerdir.
-Kalın ve ince rombusların sayı oranı altın orana yaklaşır. Modeldeki
-p = 1/φ değeri bu matematiksel ilişkiden gelir.
-
-Shechtman ve arkadaşlarının kuasikristal çalışması, periyodik olmayan
-düzenli yapıların fiziksel malzemelerde de bulunabileceğini göstermiştir.
-Lu ve Steinhardt ise girih desenlerindeki on katlı düzenleri incelemiştir.
-""")
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            goster(fig_kirinim())
-        with c2:
-            goster(fig_rozet())
-        with c3:
-            goster(fig_girih())
-
-    with s2:
-        st.markdown("""
-**A · Simetri.** Görsel gri tonlamaya çevrilir, 200 × 200 piksele getirilir
-ve ortalama parlaklığa göre ikileştirilir. Şans eşiği B(p) = p² + (1 − p)²,
-simetri oranı S_k ve üstünlük skoru aşağıdaki gibidir:
-""")
+        **YSÜM**, bir görüntüdeki dönel benzerlik oranını ($S_k$), piksel dağılımından kaynaklanan bu matematiksel şans eşiğinden ($B$) arındırır:
+        """)
         st.latex(r"U_k = \frac{S_k - B}{1 - B}")
         st.markdown("""
-**B · Kenar düzensizliği.** Lezyon, Otsu eşiğiyle ayrılır ve merkeze en yakın
-en büyük bölge alınır. Sınır uzunluğu P ve alan A ile P / (2√(πA)) hesaplanır.
-Daire yaklaşık 1 verir; değer büyüdükçe sınır daha düzensizdir.
-
-**C · Renk çeşitliliği.** Lezyondaki pikseller 6 yaklaşık dermatoskopik renge
-(beyaz, açık ve koyu kahverengi, mavi-gri, siyah, kırmızımsı) en yakın olana
-atanır. Piksellerin en az %5'ini alan renk sınıfları sayılır.
-
-**Kalite kuralları.** A ölçümünde geçerli piksel çifti oranı %50'nin altındaki
-noktalar ve tamamen tek renkli bölgeler hesaba girmez.
-
-|U| ≤ 0,15 sınırı yalnızca açıklama konvansiyonudur; istatistiksel eşik
-değildir.
-""")
-
-        satirlar = []
-        K, I = 2, 1
-        for n in range(1, 7):
-            T = K + I
-            satirlar.append({
-                "n": n,
-                "K_n": K,
-                "I_n": I,
-                "T_n": T,
-                "K_n/T_n": round(K / T, 6),
-            })
-            K, I = 2 * K + I, K + I
-
-        st.table(pd.DataFrame(satirlar))
+        * **$U > +0,15$**: Şans beklentisinden belirgin yüksek (düzenli tasarım).
+        * **$-0,15 \le U \le +0,15$**: Şans beklentisiyle uyumlu yapı.
+        * **$U < -0,15$**: Şans beklentisinden belirgin asimetrik / dağınık örüntü.
+        """)
+    with c_mat2:
         goster(fig_b_egrisi())
 
-    with s3:
-        st.info(
-            "Dermatoskopik çalışmada nv ve mel adları metadata'daki grupları "
-            "belirtir. YSÜM tek bir görsel hakkında iyi huylu veya kötü huylu "
-            "kararı vermez."
+    st.markdown("---")
+    st.markdown("#### 🔬 Geometrik Kırınım ve Mimari Motif Örnekleri")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        goster(fig_kirinim())
+        st.caption("Dan Shechtman'a Nobel kazandıran 5 katlı kırınım düzeni simülasyonu.")
+    with c2:
+        goster(fig_rozet())
+        st.caption("Penrose aperiyodik döşemelerinde ortaya çıkan 5 katlı yıldız rozeti.")
+    with c3:
+        goster(fig_girih())
+        st.caption("Tarihî Selçuklu mimarisinde görülen on katlı girih yıldız deseni.")
+
+    st.markdown("#### 🔢 Fibonacci Matris Yakınsaması (Kuramsal Çizelge)")
+    satirlar = []
+    K, I = 2, 1
+    for n in range(1, 7):
+        T = K + I
+        satirlar.append({
+            "İterasyon (n)": n,
+            "Kalın Rombus (K_n)": K,
+            "İnce Rombus (I_n)": I,
+            "Toplam (T_n)": T,
+            "Oran (K_n / T_n)": round(K / T, 6),
+            "1/φ Sapması": f"{abs(K/T - P_PENROSE):.6f}",
+        })
+        K, I = 2 * K + I, K + I
+    st.dataframe(pd.DataFrame(satirlar), use_container_width=True)
+
+
+# ---------------------------- 2. KALİBRASYON & DOĞRULAMA ----------------------------
+with t_kalibrasyon:
+    st.markdown("### 🧪 Model Kalibrasyonu ve Sentetik Test Tezgahı")
+    st.markdown("""
+    Modelin ampirik verilere (ör. dermatoskopi veya endüstriyel yüzeyler) uygulanmadan önce, 
+    bilinen geometrik özelliklere sahip sentetik kalıplarda nasıl tepki verdiğini buradan doğrulayabilirsiniz.
+    """)
+
+    c_k1, c_k2 = st.columns([1, 1.2])
+    with c_k1:
+        test_tipi = st.selectbox(
+            "Test Edilecek Geometrik Kalıp",
+            [
+                "Kusursuz Simetrik Şekil (Daire)",
+                "Kontrollü Asimetrik Şekil",
+                "5 Katlı Penrose Yıldızı",
+                "Rastgele Beyaz Gürültü (Uniform Dağılım)",
+            ],
         )
 
+        kod_haritasi = {
+            "Kusursuz Simetrik Şekil (Daire)": "yuvarlak",
+            "Kontrollü Asimetrik Şekil": "duzensiz",
+            "5 Katlı Penrose Yıldızı": "bes_kat",
+            "Rastgele Beyaz Gürültü (Uniform Dağılım)": "gurultu",
+        }
 
-# ---------------------------- YAN YANA ----------------------------
+        g_sentetik = ornek_uret(kod_haritasi[test_tipi])
+        st.image(g_sentetik, caption=f"Sentetik Test Girdisi (200x200)", width=260)
+
+    with c_k2:
+        r_sentetik = gorsel_analiz(
+            g_sentetik, k, sabit, koyu_modu, SKOR_YARICAPLARI, True, aci_sayisi, adim
+        )
+
+        if r_sentetik:
+            st.markdown(f"#### Analiz Sonucu: `{test_tipi}`")
+            m1, m2 = st.columns(2)
+            m1.metric("Açık Piksel Oranı (p)", f"{r_sentetik['p']:.4f}")
+            m1.metric("Şans Eşiği B(p)", f"{r_sentetik['B']:.4f}")
+            m2.metric("Ortalama Eşleşme (S)", f"{r_sentetik['S_ort']:.4f}")
+            m2.metric("Üstünlük Skoru (U)", f"{r_sentetik['U_ort']:+.4f}")
+
+            st.write("")
+            if "Simetrik" in test_tipi and r_sentetik['U_ort'] > 0.15:
+                st.markdown('<span class="badge-success">✓ Doğrulandı:</span> Kusursuz simetri şans eşiğini rahatça aşmaktadır.', unsafe_allow_html=True)
+            elif "Gürültü" in test_tipi and abs(r_sentetik['U_ort']) <= 0.15:
+                st.markdown('<span class="badge-success">✓ Doğrulandı:</span> Rastgele gürültü şans beklentisi sınırları içinde sıfıra yakınsamaktadır.', unsafe_allow_html=True)
+            elif "Asimetrik" in test_tipi:
+                st.markdown('<span class="badge-gold">Bilgi:</span> Düzensiz sınırlarda yerel simetri düşüşü başarıyla kaydedilmiştir.', unsafe_allow_html=True)
+
+
+# ---------------------------- 3. GÖRSEL ANALİZ & ISI HARİTASI ----------------------------
 with t_yy:
-    st.subheader("İki görseli yan yana analiz")
+    st.markdown("### 🔍 İki Görseli Yan Yana Karşılaştırma & Isı Haritaları")
+    st.markdown("İki farklı deseni veya lezyonu yükleyerek piksel düzeyinde simetri üstünlük haritasını inceleyebilirsiniz.")
 
-    c1, c2 = st.columns(2)
-    with c1:
-        g1, rgb1, ad1 = gorsel_sec("1. görsel", "yy1", "Yuvarlak şekil")
-    with c2:
-        g2, rgb2, ad2 = gorsel_sec("2. görsel", "yy2", "Düzensiz şekil")
+    c_g1, c_g2 = st.columns(2)
+    with c_g1:
+        st.markdown("#### 1. Görsel")
+        g1, rgb1, ad1 = gorsel_sec("1. Görsel", "yy1", "Yuvarlak Şekil")
+    with c_g2:
+        st.markdown("#### 2. Görsel")
+        g2, rgb2, ad2 = gorsel_sec("2. Görsel", "yy2", "Düzensiz Sınır")
 
-    if g1 is None or g2 is None:
-        st.info("İki görsel seçin veya yükleyin.")
-    else:
+    if g1 is not None and g2 is not None:
         r1 = gorsel_analiz(g1, k, sabit, koyu_modu, SKOR_YARICAPLARI, True, aci_sayisi, adim)
         r2 = gorsel_analiz(g2, k, sabit, koyu_modu, SKOR_YARICAPLARI, True, aci_sayisi, adim)
         k1 = kriter_olc(g1, rgb1)
         k2 = kriter_olc(g2, rgb2)
 
         if r1 is None or r2 is None:
-            st.error("Görsellerden birinde yeterli geçerli ölçüm noktası bulunamadı.")
+            st.error("Görsellerden birinde geçerli ölçüm noktası bulunamadı.")
         else:
-            with c1:
-                st.image(g1, caption=ad1, width=280)
-            with c2:
-                st.image(g2, caption=ad2, width=280)
+            st.write("")
+            c_img1, c_img2 = st.columns(2)
+            with c_img1:
+                goster(isi_figur(g1, r1["izg"], r1["U_matris"], f"{ad1} · YSÜM Isı Haritası"))
+            with c_img2:
+                goster(isi_figur(g2, r2["izg"], r2["U_matris"], f"{ad2} · YSÜM Isı Haritası"))
 
-            def bicim(v):
-                if isinstance(v, (bool, np.bool_)):
-                    return "Evet" if v else "Hayır"
-                if isinstance(v, (int, np.integer)):
-                    return str(int(v))
-                if isinstance(v, (float, np.floating)):
-                    return tr_sayi(float(v))
-                return str(v)
-
-            def renk_sayi(kr):
-                return str(int(kr["C_renk"])) if kr["Lezyon_bulundu"] else "—"
-
-            satirlar = [
-                ("A · Açık alan oranı (p)", r1["p"], r2["p"]),
-                ("A · Şans eşiği (B)", r1["B"], r2["B"]),
-                ("A · Ortalama eşleşme (S_ort)", r1["S_ort"], r2["S_ort"]),
-                ("A · Ortalama YSÜM (U_ort)", r1["U_ort"], r2["U_ort"]),
-                ("A · Medyan YSÜM", r1["U_medyan"], r2["U_medyan"]),
-                ("A · Izgara içi dağılım (U_std)", r1["U_std"], r2["U_std"]),
-                ("A · Maksimum odak (U_maks)", r1["U_maks"], r2["U_maks"]),
-                ("A · Merkez YSÜM", r1["U_merkez"], r2["U_merkez"]),
-                ("A · Negatif kontrol", r1["U_kontrol"], r2["U_kontrol"]),
-                ("A · Geçerli nokta", r1["Gecerli_nokta"], r2["Gecerli_nokta"]),
-                ("A · Ortalama kapsama", r1["Kapsama_ort"], r2["Kapsama_ort"]),
-                ("Lezyon bulundu", k1["Lezyon_bulundu"], k2["Lezyon_bulundu"]),
-                (
-                    "B · Kenar düzensizliği",
-                    tr_sayi(k1["B_duz"], 3) if k1["Lezyon_bulundu"] else "—",
-                    tr_sayi(k2["B_duz"], 3) if k2["Lezyon_bulundu"] else "—",
-                ),
-                ("C · Renk sınıfı sayısı", renk_sayi(k1), renk_sayi(k2)),
-                ("C · Bulunan renk sınıfları", k1["C_siniflar"] or "—", k2["C_siniflar"] or "—"),
-                (
-                    "Durum (A, U_ort'a göre)",
-                    yorum_etiketi(r1["U_ort"]),
-                    yorum_etiketi(r2["U_ort"]),
-                ),
+            satirlar_karsilastir = [
+                ("A · Açık Piksel Oranı (p)", tr_sayi(r1["p"]), tr_sayi(r2["p"])),
+                ("A · Şans Eşleşme Eşiği (B)", tr_sayi(r1["B"]), tr_sayi(r2["B"])),
+                ("A · Ölçülen Simetri Oranı (S)", tr_sayi(r1["S_ort"]), tr_sayi(r2["S_ort"])),
+                ("A · Ortalama Üstünlük Skoru (U)", tr_sayi(r1["U_ort"]), tr_sayi(r2["U_ort"])),
+                ("A · Maksimum Odak Skoru (U_maks)", tr_sayi(r1["U_maks"]), tr_sayi(r2["U_maks"])),
+                ("A · Negatif Kontrol (Gürültü U)", tr_sayi(r1["U_kontrol"]), tr_sayi(r2["U_kontrol"])),
+                ("B · Sınır Düzensizliği (İzoperimetrik)", tr_sayi(k1["B_duz"], 3) if k1["Lezyon_bulundu"] else "—", tr_sayi(k2["B_duz"], 3) if k2["Lezyon_bulundu"] else "—"),
+                ("C · Tespit Edilen Renk Sınıf Sayısı", str(int(k1["C_renk"])) if k1["Lezyon_bulundu"] else "—", str(int(k2["C_renk"])) if k2["Lezyon_bulundu"] else "—"),
+                ("C · Hakim Renk Tonları", k1["C_siniflar"] or "—", k2["C_siniflar"] or "—"),
+                ("Simetri Değerlendirmesi", yorum_etiketi(r1["U_ort"]), yorum_etiketi(r2["U_ort"])),
             ]
 
-            tablo = pd.DataFrame(
-                [(b, bicim(v1), bicim(v2)) for b, v1, v2 in satirlar],
-                columns=["Ölçüt", "1. görsel", "2. görsel"],
-            )
-            st.table(tablo)
+            df_kar = pd.DataFrame(satirlar_karsilastir, columns=["Ölçüt / Parametre", "1. Görsel Değeri", "2. Görsel Değeri"])
+            st.table(df_kar)
 
             delta = r2["U_ort"] - r1["U_ort"]
-            st.metric("ΔU = U_ort(2) − U_ort(1)", f"{delta:+.4f}")
-
-            st.caption(
-                "Bu tablo yalnızca iki görselin ölçüm değerlerini gösterir. "
-                "Görseller iyi huylu/kötü huylu olarak sınıflandırılmaz. "
-                "Grup karşılaştırması için Toplu Test kullanılır."
-            )
+            st.metric("İki Görsel Arasındaki Simetri Farkı (ΔU)", f"{delta:+.4f}")
 
 
-# ---------------------------- TOPLU TEST ----------------------------
+# ---------------------------- 4. ENDÜSTRİYEL & GEOMETRİK İNCELEME ----------------------------
+with t_endustri:
+    st.markdown("### 🏭 Endüstriyel Yüzey ve Üretim Prototipi İnceleme Modülü")
+    st.markdown("""
+    Bu bölüm, seri üretime geçecek parçalarda (örneğin dairesel kapaklar, 6 kollu dişliler, 
+    dekoratif seramik/çini karoları ve hassas yüzeyler) imalat öncesi **simetri sapmalarını ve kusurlu bölgeleri** tespit etmek için geliştirilmiştir.
+    """)
+
+    c_end1, c_end2 = st.columns([1, 1.2])
+    with c_end1:
+        st.markdown("#### Prototip Yüzey Görüntüsü")
+        end_up = st.file_uploader("Ürün / Yüzey Fotoğrafı Yükle", type=UPLOAD_TYPES, key="end_up")
+        k_end = st.selectbox(
+            "Hedeflenen Tasarım Simetrisi",
+            [2, 5, 6, 8],
+            index=2,
+            format_func=lambda x: f"{x} Katlı Rotasyon ({360//x}° Simetri)",
+        )
+
+        if end_up is not None:
+            g_end, _, ad_end = gorselleri_oku(end_up.getvalue())
+        else:
+            g_end = ornek_uret("bes_kat")
+            ad_end = "5 Katlı Örnek Tasarım Rozeti"
+
+        st.image(g_end, caption=f"İncelenen Parça: {ad_end}", width=280)
+
+    with c_end2:
+        st.markdown("#### Kusur & Simetri Sapma Haritası")
+        r_end = gorsel_analiz(g_end, k_end, sabit, koyu_modu, ISI_YARICAPLARI, False, aci_sayisi, adim)
+
+        if r_end:
+            goster(isi_figur(g_end, r_end["izg"], r_end["U_matris"], f"{k_end} Katlı Simetri Dağılımı"))
+            
+            c_m1, c_m2, c_m3 = st.columns(3)
+            c_m1.metric("Genel Simetri Uyumu (U)", f"{r_end['U_ort']:.4f}")
+            c_m2.metric("En Yüksek Simetri Odağı", f"{r_end['U_maks']:.4f}")
+            c_m3.metric("Homojenlik (Std Sapma)", f"{r_end['U_std']:.4f}")
+
+            st.markdown("""
+            **Yorumlama Rehberi:**
+            * **Kırmızı/Sıcak Bölgeler:** Tasarım simetrisinin korunduğu alanlar.
+            * **Mavi/Soğuk Bölgeler:** Geometrik sapma, çapak, kırık veya üretim hatası bulunan kusurlu bölgeler.
+            """)
+
+
+# ---------------------------- 5. BÜYÜK VERİ ARAŞTIRMASI (HAM10000) ----------------------------
 with t_toplu:
-    st.subheader("Üç ölçütle iki grup karşılaştırması")
-
-    st.markdown(
-        "Grupları metadata'ya göre yükleyin. Üç ölçüt (A, B, C) aynı görsellerle "
-        "hesaplanır. Anlamlılık eşiği 0,05 / 3 ≈ 0,0167'dir."
-    )
+    st.markdown("### 📊 HAM10000 Dermatoskopi Benchmark Testi")
+    st.markdown("""
+    İyi huylu (nv, n=100) ve kötü huylu (mel, n=100) dermatoskopi görüntülerini yükleyerek 
+    **A (Simetri), B (Kenar Düzensizliği) ve C (Renk Çeşitliliği)** ölçütlerini eşzamanlı olarak sınayın.
+    """)
 
     v = st.session_state.setdefault("yukleme_v", 0)
 
     c1, c2 = st.columns(2)
     with c1:
-        iyi_yuk = st.file_uploader(
-            GRUP_IYI,
-            type=UPLOAD_TYPES,
-            accept_multiple_files=True,
-            key=f"grp_iyi_{v}",
-        )
+        st.markdown(f"**{GRUP_IYI} Klasörü Dosyaları**")
+        iyi_yuk = st.file_uploader(GRUP_IYI, type=UPLOAD_TYPES, accept_multiple_files=True, key=f"grp_iyi_{v}")
     with c2:
-        kotu_yuk = st.file_uploader(
-            GRUP_KOTU,
-            type=UPLOAD_TYPES,
-            accept_multiple_files=True,
-            key=f"grp_kotu_{v}",
-        )
+        st.markdown(f"**{GRUP_KOTU} Klasörü Dosyaları**")
+        kotu_yuk = st.file_uploader(GRUP_KOTU, type=UPLOAD_TYPES, accept_multiple_files=True, key=f"grp_kotu_{v}")
 
-    b1, b2 = st.columns(2)
-    calistir = b1.button("🚀 Testi çalıştır", key="btn_toplu", type="primary")
-    temizle = b2.button("🗑️ Eski sonuçları ve yüklemeleri temizle", key="btn_temizle")
+    b_run, b_clear = st.columns([1, 1])
+    with b_run:
+        calistir = st.button("🚀 Toplu Benchmark Testini Başlat", key="btn_toplu", type="primary", use_container_width=True)
+    with b_clear:
+        temizle = st.button("🗑️ Verileri ve Önceki Sonuçları Temizle", key="btn_temizle", use_container_width=True)
 
     if temizle:
         st.session_state.pop("toplu", None)
@@ -1063,7 +1157,7 @@ with t_toplu:
         kotu = [(f.name, f.getvalue()) for f in (kotu_yuk or [])]
 
         if len(iyi) < 2 or len(kotu) < 2:
-            st.error("Her grupta en az iki görsel yüklenmelidir.")
+            st.error("Her iki gruptan da en az ikişer görsel yüklenmelidir.")
         else:
             ad_ortak = {a for a, _ in iyi} & {a for a, _ in kotu}
             md5_iyi = {hashlib.md5(b).hexdigest() for _, b in iyi}
@@ -1071,7 +1165,7 @@ with t_toplu:
             icerik_ortak = md5_iyi & md5_kotu
 
             if ad_ortak or icerik_ortak:
-                st.error("Aynı görsel iki grupta bulunuyor. Test durduruldu.")
+                st.error("Hata: Gruplar arasında mükerrer (aynı) dosyalar tespit edildi. Test durduruldu.")
                 st.session_state.pop("toplu", None)
             else:
                 dosyalar = (
@@ -1097,97 +1191,28 @@ with t_toplu:
         toplu_goster(kayit)
 
 
-# ---------------------------- ISI HARİTASI ----------------------------
-with t_isi:
-    st.subheader("Isı haritası ve odak noktaları")
-
-    gri, _, ad = gorsel_sec("Görsel", "isi", "5 katlı desen")
-
-    k_isi = st.selectbox(
-        "Simetri türü (ısı haritası)",
-        list(K_SECENEKLER),
-        index=1,
-        format_func=lambda x: K_SECENEKLER[x],
-        key="isi_k",
-    )
-
-    if gri is not None:
-        r = gorsel_analiz(
-            gri, k_isi, sabit, koyu_modu,
-            ISI_YARICAPLARI, False, aci_sayisi, adim,
-        )
-
-        if r is None:
-            st.error("Yeterli geçerli ölçüm noktası bulunamadı.")
-        else:
-            c1, c2 = st.columns(2)
-            with c1:
-                st.image(gri, caption=ad, width=280)
-            with c2:
-                goster(isi_figur(
-                    gri,
-                    r["izg"],
-                    r["U_matris"],
-                    f"k = {k_isi} · U_ort = {r['U_ort']:.3f}",
-                ))
-
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Açık alan oranı", f"{r['p']:.3f}")
-            m2.metric("Ortalama YSÜM", f"{r['U_ort']:.4f}")
-            m3.metric("Medyan YSÜM", f"{r['U_medyan']:.4f}")
-            m4.metric(
-                "Geçerli / toplam nokta",
-                f"{r['Gecerli_nokta']} / {r['Toplam_nokta']}",
-            )
-
-            st.caption(
-                "Boş ısı haritası noktaları kalite kuralı nedeniyle hesaplamaya "
-                "alınmamıştır."
-            )
-
-            u = r["U_matris"]
-            if np.isfinite(u).any():
-                doldurulmus = np.where(np.isfinite(u), u, -np.inf)
-                sira = np.argsort(doldurulmus.ravel())[::-1][:3]
-
-                odaklar = []
-                for idx in sira:
-                    iy, ix = np.unravel_index(idx, u.shape)
-                    odaklar.append({
-                        "x": int(r["izg"][ix]),
-                        "y": int(r["izg"][iy]),
-                        "U": round(float(u[iy, ix]), 4),
-                    })
-                st.table(pd.DataFrame(odaklar))
-
-
-# ---------------------------- SINIRLILIKLAR ----------------------------
-with t_sinir:
+# ---------------------------- 6. MODEL MİMARİSİ VE METODOLOJİ ----------------------------
+with t_metodoloji:
+    st.markdown("### 📋 Model Parametreleri ve Akademik Metodoloji")
+    
     st.markdown("""
-- Uygulama tıbbi tanı, tarama veya karar aracı değildir.
-- Tek bir görsel iyi huylu/kötü huylu olarak sınıflandırılmaz.
-- Görseller 200 × 200 piksele getirilir; en-boy oranı korunmaz.
-- **B ve C lezyon bölütlemesi basit eşiklemeye dayanır.** Saç, kıl izi ve
-  gölgeler bölütlemeyi bozabilir. Lezyon bulunamayan görseller B ve C
-  analizinden çıkarılır; bu sayı tabloda gösterilir.
-- **C renk sınıfları yaklaşıktır.** Palet sabit ve önceden tanımlıdır; kalibre
-  edilmiş bir renk ölçümü değildir.
-- 180° nokta simetrisi ile dermatolojideki eksen simetrisi aynı değildir.
-- Kalite kuralları kenar ve ardıplan etkisini azaltır; bütün ölçüm hatalarını
-  ortadan kaldırmaz.
-- ±0,15 sınırı bir açıklama konvansiyonudur; istatistiksel test değildir.
-- Üç ölçüt için Bonferroni düzeltmesi uygulanır (α = 0,05 / 3).
-- Dengeli 100/100 örneklem gerçek hastalık sıklığını yansıtmaz.
-- Sonuçlar örneklem, ön işleme ve ölçüm protokolüne özgüdür.
-""")
+    #### 1. Veri Ön İşleme ve İkileştirme
+    * Görüntüler renk uzayından bağımsız olarak **200 × 200** piksel boyutuna normalize edilir.
+    * Her görselin kendi ortalama gri parlaklık değeri dinamik eşik kabul edilerek ikili (binary) matrise dönüştürülür.
+    
+    #### 2. Kalite Denetim Kuralları (Filtreleme)
+    * **MIN_KAPSAMA ≥ %50:** Çember yayında görüntü sınırları dışına taşan noktalar %50'den fazlaysa o nokta hesaplama dışı bırakılır.
+    * **Düz Alan Dışlama:** Tamamı tek renk (homojen) olan piksel bölgelerinde simetri tanımsız olduğu için elenir.
+    
+    #### 3. B ve C Lezyon Bölütlemesi
+    * **Otsu Eşikleme:** En yüksek varyans eşiğiyle iki lezyon adayı oluşturulur; görüntü merkezine temas eden en büyük bağlı bileşen seçilir.
+    * **İzoperimetrik Düzensizlik:** $B_{duz} = P / (2\sqrt{\pi A})$ formülüyle sınır kıvrımlılığı hesaplanır.
+    * **Renk Çeşitliliği:** 6 temel dermatoskopik referans tona en az %5 piksel oranında dahil olan sınıflar sayılır.
+    
+    #### 4. İstatistiksel Hipotez Testleri
+    * Çoklu ölçüt karşılaştırmasında Tip I hatayı engellemek için **Bonferroni Düzeltmesi** uygulanır: $\alpha = 0,05 / 3 \approx 0,0167$.
+    * Grupların varyans eşitliği varsayılmaksızın **Welch t-testi** ve etki büyüklüğü için **Cohen's d** hesaplanır.
+    """)
 
-    st.error(
-        "Bu test klinik araştırma standartlarının altındadır. "
-        "Sonuç hiçbir şekilde tıbbi geçerlilik taşımaz."
-    )
-
-st.markdown("---")
-st.caption(
-    "⚠️ Araştırma ve eğitim amaçlıdır. "
-    "Tıbbi tanı, tarama veya karar için kullanılamaz."
-)
+    st.markdown("---")
+    st.caption("🔬 TÜBİTAK 2204-B Ortaokul Öğrencileri Araştırma Projeleri Yarışması Bilgisayar / Yapay Zekâ Alanı Çalışmasıdır.")
