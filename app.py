@@ -3385,5 +3385,3 @@ with tabs[5]:
     st.caption(
         "HAM10000 için veri kümesinin sürümünü ve indirme tarihini raporda "
         "belirtin; veri kümesinin lisans koşullarına uyun."
-    )
-```
