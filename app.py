@@ -929,41 +929,120 @@ def fig_batch_boxplots(data):
         ("C — Renk sınıfı sayısı", "C_colors"),
     ]
 
+    groups = [
+        (GROUP_NV, GROUP_NV_CHART, "#55a9a2"),
+        (GROUP_MEL, GROUP_MEL_CHART, "#8b72bd"),
+    ]
+
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.8))
-    labels = [GROUP_NV_CHART, GROUP_MEL_CHART]
-    colors = ["#55a9a2", "#8b72bd"]
 
     for ax, (title, column) in zip(axes, specs):
-        nv = pd.to_numeric(
-            data.loc[data["grup"] == GROUP_NV, column],
-            errors="coerce",
-        ).dropna()
-        mel = pd.to_numeric(
-            data.loc[data["grup"] == GROUP_MEL, column],
-            errors="coerce",
-        ).dropna()
+        plot_data = []
 
-        if len(nv) == 0 or len(mel) == 0:
-            ax.text(0.5, 0.5, "Yeterli değer yok", ha="center", va="center")
+        for group_name, label, color in groups:
+            values = pd.to_numeric(
+                data.loc[data["grup"] == group_name, column],
+                errors="coerce",
+            ).dropna().to_numpy(dtype=float)
+
+            values = values[np.isfinite(values)]
+            plot_data.append((label, color, values))
+
+        if any(len(values) == 0 for _, _, values in plot_data):
+            ax.text(
+                0.5,
+                0.5,
+                "Yeterli değer yok",
+                ha="center",
+                va="center",
+            )
             ax.set_title(title)
             ax.axis("off")
             continue
 
-        box = ax.boxplot(
-            [nv.to_numpy(), mel.to_numpy()],
-            labels=labels,
-            patch_artist=True,
-            showfliers=False,
-            medianprops={"color": "#26364c", "linewidth": 2},
-        )
+        for position, (label, color, values) in enumerate(plot_data, start=1):
+            q1, median, q3 = np.percentile(values, [25, 50, 75])
+            iqr = q3 - q1
 
-        for patch, color in zip(box["boxes"], colors):
-            patch.set_facecolor(color)
-            patch.set_alpha(0.72)
+            lower_values = values[values >= q1 - 1.5 * iqr]
+            upper_values = values[values <= q3 + 1.5 * iqr]
+
+            whisker_low = (
+                float(np.min(lower_values))
+                if len(lower_values) > 0
+                else float(np.min(values))
+            )
+            whisker_high = (
+                float(np.max(upper_values))
+                if len(upper_values) > 0
+                else float(np.max(values))
+            )
+
+            half_width = 0.25
+            left = position - half_width
+            right = position + half_width
+            cap_width = 0.12
+
+            ax.plot(
+                [position, position],
+                [whisker_low, q1],
+                color="#334155",
+                linewidth=1.4,
+            )
+            ax.plot(
+                [position, position],
+                [q3, whisker_high],
+                color="#334155",
+                linewidth=1.4,
+            )
+
+            ax.plot(
+                [position - cap_width, position + cap_width],
+                [whisker_low, whisker_low],
+                color="#334155",
+                linewidth=1.4,
+            )
+            ax.plot(
+                [position - cap_width, position + cap_width],
+                [whisker_high, whisker_high],
+                color="#334155",
+                linewidth=1.4,
+            )
+
+            ax.fill_between(
+                [left, right],
+                [q1, q1],
+                [q3, q3],
+                color=color,
+                alpha=0.72,
+                zorder=2,
+            )
+
+            ax.plot(
+                [left, right, right, left, left],
+                [q1, q1, q3, q3, q1],
+                color="#334155",
+                linewidth=1.3,
+                zorder=3,
+            )
+
+            ax.plot(
+                [left, right],
+                [median, median],
+                color="#26364c",
+                linewidth=2.2,
+                zorder=4,
+            )
 
         ax.set_title(title)
-        ax.tick_params(axis="x", labelrotation=12, labelsize=8)
+        ax.set_xticks([1, 2])
+        ax.set_xticklabels(
+            [GROUP_NV_CHART, GROUP_MEL_CHART],
+            rotation=12,
+            fontsize=8,
+        )
         ax.grid(axis="y", alpha=0.22)
+        ax.margins(y=0.12)
 
     fig.tight_layout()
     return fig
