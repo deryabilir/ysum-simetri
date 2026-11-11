@@ -1,4 +1,4 @@
-# YSÜM — Yerel Simetri Üstünlük Modeli
+ YSÜM — Yerel Simetri Üstünlük Modeli
 # v3.3 — Ana A/B/C protokolü korunmuştur.
 # Yeni ayna-asimetrisi analizleri keşifseldir ve ana sonuçlardan ayrıdır.
 
@@ -3385,3 +3385,4 @@ with tabs[5]:
     st.caption(
         "HAM10000 için veri kümesinin sürümünü ve indirme tarihini raporda "
         "belirtin; veri kümesinin lisans koşullarına uyun."
+    )
