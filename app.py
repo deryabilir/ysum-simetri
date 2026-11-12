@@ -4065,4 +4065,3 @@ with tabs[5]:
         "HAM10000 için veri kümesi sürümünü ve indirme tarihini raporda "
         "belirtin; veri kümesinin lisans koşullarına uyun."
     )
-```
