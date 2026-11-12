@@ -1,8 +1,3 @@
-# YSÜM — Yerel Simetri Üstünlük Modeli
-# v3.3 — v3.2 tasarımı temel alınmıştır.
-# Ana A/B/C ölçümleri korunur. Ek maske ölçümleri keşifseldir.
-# Uygulama klinik tanı veya otomatik kabul/red kararı üretmez.
-
 import hashlib
 import html
 import io
