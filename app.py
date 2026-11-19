@@ -23,7 +23,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-SURUM = "YSÜM-v3.3"
+SURUM = "YSÜM-v4.0-dev"
 IMG_N = 200
 
 ALFA = 0.05
@@ -754,25 +754,60 @@ def mask_rotation_measure(mask, k=2, n_angles=180, step_px=4):
 
 
 def lesion_features(rgb, segmentation=None):
-    """B, C ve keşifsel maske ayna-asimetrisi ölçümlerini hesaplar."""
-    seg = segmentation or segment_lesion(rgb)
+    """
+    B — Otsu maskesinden kenar düzensizliği,
+    C — sabit paletten renk sınıfı sayısı,
+    D — maske içi gri ton entropisi,
+    E — iç ve çevre bölgelerindeki renk dağılım farkı.
+
+    D ve E araştırma ölçümleridir; tanı veya risk skoru değildir.
+    """
+    rgb = np.asarray(rgb, dtype=np.uint8)
+
+    if rgb.ndim != 3 or rgb.shape[2] != 3:
+        raise ValueError(
+            "lesion_features, RGB biçiminde bir görüntü bekliyor."
+        )
+
+    seg = (
+        segmentation
+        if segmentation is not None
+        else segment_lesion(rgb)
+    )
+
+    raw_mask = seg.get("mask")
+    if raw_mask is None:
+        mask = np.zeros(rgb.shape[:2], dtype=bool)
+    else:
+        mask = np.asarray(raw_mask, dtype=bool)
+
+    try:
+        area_fraction = float(seg.get("area_fraction", 0.0))
+    except (TypeError, ValueError):
+        area_fraction = float("nan")
 
     result = {
-        "segmentation_valid": bool(seg["valid"]),
-        "area_fraction": float(seg["area_fraction"]),
+        "segmentation_valid": bool(seg.get("valid", False)),
+        "area_fraction": area_fraction,
         "B_edge": float("nan"),
         "C_colors": float("nan"),
         "color_names": "",
+        "D_entropy_bits": float("nan"),
+        "E_spatial_color_tv": float("nan"),
         "mirror_asym_lr": float("nan"),
         "mirror_asym_tb": float("nan"),
     }
 
-    if not seg["valid"] or not np.any(seg["mask"]):
+    if mask.shape != rgb.shape[:2]:
+        result["segmentation_valid"] = False
         return result
 
-    mask = np.asarray(seg["mask"], dtype=bool)
+    if not result["segmentation_valid"] or not np.any(mask):
+        return result
+
     area = float(np.count_nonzero(mask))
 
+    # B — Otsu maskesinin kenar düzensizliği
     eroded = ndimage.binary_erosion(
         mask,
         structure=np.ones((3, 3), dtype=bool),
@@ -787,6 +822,27 @@ def lesion_features(rgb, segmentation=None):
         else float("nan")
     )
 
+    # D — Maskedeki gri tonların 32 sabit seviyedeki Shannon entropisi
+    gray = np.asarray(
+        Image.fromarray(rgb).convert("L"),
+        dtype=np.uint8,
+    )
+    gray_bins = (gray[mask] // 8).astype(np.int64)
+    gray_counts = np.bincount(gray_bins, minlength=32).astype(float)
+
+    if gray_counts.sum() > 0:
+        gray_probabilities = gray_counts / gray_counts.sum()
+        nonzero_probabilities = gray_probabilities[
+            gray_probabilities > 0
+        ]
+        result["D_entropy_bits"] = float(
+            -np.sum(
+                nonzero_probabilities
+                * np.log2(nonzero_probabilities)
+            )
+        )
+
+    # C ve E için kullanılan sabit altı renk sınıfı
     palette = np.asarray(
         [
             [25, 25, 25],
@@ -798,6 +854,7 @@ def lesion_features(rgb, segmentation=None):
         ],
         dtype=float,
     )
+
     palette_names = [
         "Siyah",
         "Koyu kahverengi",
@@ -816,7 +873,11 @@ def lesion_features(rgb, segmentation=None):
         axis=2,
     )
     class_ids = np.argmin(distances, axis=1)
-    counts = np.bincount(class_ids, minlength=len(palette_names))
+
+    counts = np.bincount(
+        class_ids,
+        minlength=len(palette_names),
+    )
     fractions = counts / float(max(counts.sum(), 1))
 
     present = [
@@ -825,15 +886,68 @@ def lesion_features(rgb, segmentation=None):
         if fraction >= RENK_MIN_ORAN
     ]
 
-    result.update(
-        {
-            "C_colors": float(len(present)),
-            "color_names": ", ".join(present),
-            "mirror_asym_lr": mirror_mask_asymmetry(mask, "vertical"),
-            "mirror_asym_tb": mirror_mask_asymmetry(mask, "horizontal"),
-        }
+    result["C_colors"] = float(len(present))
+    result["color_names"] = ", ".join(present)
+
+    # E — Maskenin iç ve sınıra yakın bölgelerindeki renk dağılım farkı
+    distance_map = ndimage.distance_transform_edt(mask)
+    mask_distances = distance_map[mask]
+
+    if mask_distances.size > 0:
+        distance_split = float(np.median(mask_distances))
+
+        peripheral_region = mask & (distance_map <= distance_split)
+        inner_region = mask & (distance_map > distance_split)
+
+        if np.any(peripheral_region) and np.any(inner_region):
+            class_map = np.full(mask.shape, -1, dtype=np.int16)
+            class_map[mask] = class_ids.astype(np.int16)
+
+            peripheral_ids = class_map[peripheral_region]
+            inner_ids = class_map[inner_region]
+
+            peripheral_counts = np.bincount(
+                peripheral_ids,
+                minlength=len(palette_names),
+            ).astype(float)
+            inner_counts = np.bincount(
+                inner_ids,
+                minlength=len(palette_names),
+            ).astype(float)
+
+            if (
+                peripheral_counts.sum() > 0
+                and inner_counts.sum() > 0
+            ):
+                peripheral_distribution = (
+                    peripheral_counts / peripheral_counts.sum()
+                )
+                inner_distribution = (
+                    inner_counts / inner_counts.sum()
+                )
+
+                # 0: dağılımlar aynı; 1: dağılımlar tamamen farklı
+                result["E_spatial_color_tv"] = float(
+                    0.5
+                    * np.sum(
+                        np.abs(
+                            inner_distribution
+                            - peripheral_distribution
+                        )
+                    )
+                )
+
+    result["mirror_asym_lr"] = mirror_mask_asymmetry(
+        mask,
+        "vertical",
     )
+    result["mirror_asym_tb"] = mirror_mask_asymmetry(
+        mask,
+        "horizontal",
+    )
+
     return result
+
 
 
 def mask_overlay_array(rgb, mask):
@@ -2892,6 +3006,7 @@ tabs = st.tabs(
         "🏭 Endüstriyel & Geometrik İnceleme",
         "📊 HAM10000 Grup Karşılaştırması",
         "🧭 Model Mimarisi & Metodoloji",
+        "🤖 Model Hazırlığı & A–E Ölçümleri",
     ]
 )
 
@@ -4065,3 +4180,120 @@ with tabs[5]:
         "HAM10000 için veri kümesi sürümünü ve indirme tarihini raporda "
         "belirtin; veri kümesinin lisans koşullarına uyun."
     )
+
+with tabs[6]:
+    st.markdown("### 🤖 YSÜM Model Hazırlığı")
+
+    st.markdown(
+        """
+        <div class="section-card">
+        Bu bölüm A–E ölçümlerini tek görsel üzerinde gösterir.
+        Eğitilmiş sınıflandırma modeli daha sonra eklenecektir.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.info(
+        "Model henüz eğitilmediği için nevüs/melanom tahmini veya "
+        "risk skoru gösterilmez; yalnızca görüntü ölçümleri hesaplanır."
+    )
+
+    uploaded_model_image = st.file_uploader(
+        "İncelenecek dermoskopik görsel",
+        type=["jpg", "jpeg", "png", "webp"],
+        key="ysum_model_input",
+    )
+
+    if uploaded_model_image is not None:
+        try:
+            model_image = image_from_bytes(
+                uploaded_model_image.getvalue()
+            )
+
+            # Sabit A ayarları:
+            # k=2, 180 açı, 4 px adım, merkez ayarı kapalı.
+            model_analysis = gorsel_analiz(
+                model_image,
+                k=2,
+                n_angles=180,
+                step_px=4,
+                center_adjust=False,
+                with_heat=False,
+            )
+
+            model_rgb = model_analysis["rgb"]
+            model_segmentation = segment_lesion(model_rgb)
+            model_features = lesion_features(
+                model_rgb,
+                model_segmentation,
+            )
+
+            st.markdown("#### Görüntü ölçümleri")
+
+            metric_columns = st.columns(5)
+            metric_columns[0].metric(
+                "A — Dönel U",
+                fmt_number(model_analysis["U"]),
+            )
+            metric_columns[1].metric(
+                "B — Kenar düzensizliği",
+                fmt_number(model_features["B_edge"]),
+            )
+            metric_columns[2].metric(
+                "C — Renk sınıfı sayısı",
+                fmt_number(model_features["C_colors"], 0),
+            )
+            metric_columns[3].metric(
+                "D — Gri ton entropisi (bit)",
+                fmt_number(model_features["D_entropy_bits"], 3),
+            )
+            metric_columns[4].metric(
+                "E — İç/çevre renk farkı",
+                fmt_number(model_features["E_spatial_color_tv"], 3),
+            )
+
+            image_column, mask_column = st.columns(2)
+
+            with image_column:
+                st.image(
+                    model_rgb,
+                    caption="Analizde kullanılan 200×200 RGB görüntü",
+                    use_container_width=True,
+                )
+
+            with mask_column:
+                st.image(
+                    mask_overlay_array(
+                        model_rgb,
+                        model_segmentation["mask"],
+                    ),
+                    caption=(
+                        "Otsu’nun yaklaşık maskesi: renkli alan; "
+                        "sarı çizgi: yaklaşık sınır"
+                    ),
+                    use_container_width=True,
+                )
+
+            st.caption(
+                "A, k=2 (180°), 180 açı ve 4 px adımla hesaplanır. "
+                "D, Otsu maskesindeki 32 gri ton seviyesinin entropisidir. "
+                "E, maskenin iç ve sınıra yakın bölgelerindeki renk "
+                "dağılımlarının farkıdır."
+            )
+
+            st.caption(
+                "Otsu maskesinin geçerli bulunması, gerçek lezyon "
+                "sınırını doğru çizdiğini kanıtlamaz. Mevcut ısı haritası "
+                "kanser risk haritası değildir."
+            )
+
+            if not model_segmentation["valid"]:
+                st.warning(
+                    "Bu görüntüde Otsu maskesi geçerli bulunmadı. "
+                    "B, C, D ve E maskeye bağlı ölçümler olduğundan "
+                    "hesaplanamamış veya güvenilir olmayabilir."
+                )
+
+        except Exception as exc:
+            st.error(f"Görsel analiz edilemedi: {exc}")
