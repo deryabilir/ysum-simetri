@@ -1,115 +1,96 @@
-<div class="section-card">
-        Bu bölüm A–E ölçümlerini tek görsel üzerinde gösterir.
-        Eğitilmiş sınıflandırma modeli daha sonra eklenecektir.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+import hashlib
+import html
+import io
+import math
+from pathlib import Path
 
-    st.info(
-        "Model henüz eğitilmediği için nevüs/melanom tahmini veya "
-        "risk skoru gösterilmez; yalnızca görüntü ölçümleri hesaplanır."
-    )
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import streamlit as st
+from PIL import Image, ImageOps
+from scipy import ndimage, stats
 
-    uploaded_model_image = st.file_uploader(
-        "İncelenecek dermoskopik görsel",
-        type=["jpg", "jpeg", "png", "webp"],
-        key="ysum_model_input",
-    )
 
-    if uploaded_model_image is not None:
-        try:
-            model_image = image_from_bytes(
-                uploaded_model_image.getvalue()
-            )
+# ---------------------------------------------------------------------
+# AYARLAR
+# ---------------------------------------------------------------------
 
-            # Sabit A ayarları:
-            # k=2, 180 açı, 4 px adım, merkez ayarı kapalı.
-            model_analysis = gorsel_analiz(
-                model_image,
-                k=2,
-                n_angles=180,
-                step_px=4,
-                center_adjust=False,
-                with_heat=True,
-            )
-            model_rgb = model_analysis["rgb"]
-            model_segmentation = segment_lesion(model_rgb)
-            model_features = lesion_features(
-                model_rgb,
-                model_segmentation,
-            )
+st.set_page_config(
+    page_title="YSÜM | Görüntü Simetri İncelemesi",
+    page_icon="✳️",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
-            st.markdown("#### Görüntü ölçümleri")
+SURUM = "YSÜM-v4.1-AE"
+IMG_N = 200
 
-            metric_columns = st.columns(5)
-            metric_columns[0].metric(
-                "A — Dönel U",
-                fmt_number(model_analysis["U"]),
-            )
-            metric_columns[1].metric(
-                "B — Kenar düzensizliği",
-                fmt_number(model_features["B_edge"]),
-            )
-            metric_columns[2].metric(
-                "C — Renk sınıfı sayısı",
-                fmt_number(model_features["C_colors"], 0),
-            )
-            metric_columns[3].metric(
-                "D — Gri ton entropisi (bit)",
-                fmt_number(model_features["D_entropy_bits"], 3),
-            )
-            metric_columns[4].metric(
-                "E — İç/çevre renk farkı",
-                fmt_number(model_features["E_spatial_color_tv"], 3),
-            )
+ALFA = 0.05
+KRITER_SAYISI = 3
+ALFA_DUZELTILMIS = ALFA / KRITER_SAYISI
 
-            image_column, mask_column = st.columns(2)
+MIN_KAPSAMA = 0.50
+DUZ_ALANLARI_DISLA = True
 
-            with image_column:
-                st.image(
-                    model_rgb,
-                    caption="Analizde kullanılan 200×200 RGB görüntü",
-                    use_container_width=True,
-                )
+YORUM_ESIGI = 0.15
+SKOR_YARICAPLARI = (20, 40, 60, 80)
+RENK_MIN_ORAN = 0.05
 
-            with mask_column:
-                st.image(
-                    mask_overlay_array(
-                        model_rgb,
-                        model_segmentation["mask"],
-                    ),
-                    caption=(
-                        "Otsu’nun yaklaşık maskesi: renkli alan; "
-                        "sarı çizgi: yaklaşık sınır"
-                    ),
-                    use_container_width=True,
-                )
+K_DEGERLERI = (2, 5, 6, 8)
+K_SECENEKLERI = {
+    2: "2 katlı dönel karşılaştırma — 180°",
+    5: "5 katlı dönel karşılaştırma — 72°",
+    6: "6 katlı dönel karşılaştırma — 60°",
+    8: "8 katlı dönel karşılaştırma — 45°",
+}
 
-            show_ae_maps(
-                model_analysis,
-                model_segmentation,
-                model_features,
-            )
-            st.caption(
-                "A, k=2 (180°), 180 açı ve 4 px adımla hesaplanır. "
-                "D, Otsu maskesindeki 32 gri ton seviyesinin entropisidir. "
-                "E, maskenin iç ve sınıra yakın bölgelerindeki renk "
-                "dağılımlarının farkıdır."
-            )
+HASSASIYETLER = {
+    "Standart": (36, 8),
+    "Hassas": (180, 4),
+    "Çok hassas": (360, 4),
+}
 
-            st.caption(
-                "Otsu maskesinin geçerli bulunması, gerçek lezyon "
-                "sınırını doğru çizdiğini kanıtlamaz. Mevcut ısı haritası "
-                "kanser risk haritası değildir."
-            )
+GROUP_NV = "İyi huylu nevüs (nv) etiketi taşıyan görseller"
+GROUP_MEL = "Kötü huylu melanom (mel) etiketi taşıyan görseller"
 
-            if not model_segmentation["valid"]:
-                st.warning(
-                    "Bu görüntüde Otsu maskesi geçerli bulunmadı. "
-                    "B, C, D ve E maskeye bağlı ölçümler olduğundan "
-                    "hesaplanamamış veya güvenilir olmayabilir."
-                )
+GROUP_NV_CHART = "İyi huylu nevüs (nv)"
+GROUP_MEL_CHART = "Kötü huylu melanom (mel)"
 
-        except Exception as exc:
-            st.error(f"Görsel analiz edilemedi: {exc}")
+_RESAMPLE = (
+    Image.Resampling.LANCZOS
+    if hasattr(Image, "Resampling")
+    else Image.LANCZOS
+)
+_NEAREST = (
+    Image.Resampling.NEAREST
+    if hasattr(Image, "Resampling")
+    else Image.NEAREST
+)
+
+
+# ---------------------------------------------------------------------
+# GÖRSEL TASARIM
+# ---------------------------------------------------------------------
+
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+
+    .stApp {
+        background:
+            radial-gradient(circle at 5% 2%, rgba(84, 190, 179, 0.12), transparent 26%),
+            radial-gradient(circle at 95% 0%, rgba(120, 108, 222, 0.10), transparent 25%),
+            #f5f8fc;
+    }
+
+    .block-container {
+        max-width: 1500px;
+        padding-top: 1.4rem;
+        padding-bottom: 3rem;
+    }
